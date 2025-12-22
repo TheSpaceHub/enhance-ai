@@ -13,7 +13,8 @@ def downscale(original_image: np.array, ratio: int, scaling_snap: str = "round")
     Returns:
         np.array: Image after downscaling
     """
-
+    
+    # Determine new shape
     if scaling_snap ==  "round":
         scaling_func = round
     elif scaling_snap == "ceil":
@@ -28,7 +29,7 @@ def downscale(original_image: np.array, ratio: int, scaling_snap: str = "round")
     new_h = scaling_func(h/ratio)
     new_w = scaling_func(w/ratio)
 
-
+    # Recalculate de downscaled_image
     downscaled_image = np.zeros((new_h, new_w, d))
 
     for y in range(new_h):
@@ -41,6 +42,7 @@ def downscale(original_image: np.array, ratio: int, scaling_snap: str = "round")
             chunk = original_image[y0:y1, x0:x1]
             downscaled_image[y, x] = chunk.mean(axis=(0, 1))
 
+    # Convert the downscaled image back to the original data type
     downscaled_image = downscaled_image.astype(original_image.dtype)
 
     return downscaled_image
