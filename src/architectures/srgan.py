@@ -21,10 +21,11 @@ class DiscBlock(layers.Layer):
 
 @keras.saving.register_keras_serializable()
 class Discriminator(keras.Model):
-    """Discriminador tipo PatchGAN para SRGAN/LSGAN"""
+    """Discriminador tipo PatchGAN para SRGAN"""
     def __init__(self, name="discriminator", **kwargs):
         super().__init__(name=name, **kwargs)
-
+        
+        # Discriminator blocks
         self.blocks = [
             DiscBlock(64, stride=1),
             DiscBlock(64, stride=2),
@@ -39,7 +40,7 @@ class Discriminator(keras.Model):
             DiscBlock(512, stride=2)
         ]
 
-        # Convolución final que reduce a 1 canal (PatchGAN)
+        # Final conv
         self.final_conv = layers.Conv2D(1, 3, padding="same")
 
     def call(self, inputs, training=False):
@@ -128,7 +129,7 @@ class SRGAN(keras.Model):
         self.gen_optimizer.apply_gradients(zip(gen_grads, self.generator.trainable_variables))
         self.disc_optimizer.apply_gradients(zip(disc_grads, self.discriminator.trainable_variables))
 
-        # Métricas PSNR y SSIM
+        # PSNR y SSIM metri 
         psnr_val = tf.image.psnr(hr, sr, max_val=1.0)
         ssim_val = tf.image.ssim(hr, sr, max_val=1.0)
 

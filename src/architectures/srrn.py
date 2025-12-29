@@ -4,6 +4,7 @@ from keras import layers
 
 @keras.saving.register_keras_serializable()
 class ResidualBlock(layers.Layer):
+    """Basic residual block: Conv -> BatchNorm -> ReLU"""
     def __init__(self, filters, **kwargs):
         super().__init__(**kwargs)
         self.conv1 = layers.Conv2D(filters, 3, padding='same')
@@ -32,23 +33,23 @@ class SRRN(keras.Model):
         super().__init__(name=name, **kwargs)
         self.up_ratio = up_ratio
 
-        # Conv inicial
+        # Intial conv
         self.conv_in = layers.Conv2D(filters, 9, padding='same')
         self.relu = layers.ReLU()
 
-        # Bloques residuales
+        # Residual blocks
         self.res_blocks = [ResidualBlock(filters) for _ in range(num_blocks)]
 
         # Post residual
         self.conv_post_res = layers.Conv2D(filters, 3, padding='same')
         self.bn_post_res = layers.BatchNormalization()
 
-        # Upsampling flexible
+        # Upsampling
         self.upsample = layers.Conv2D(filters * (up_ratio**2), 3, padding='same')
         self.pixel_shuffle = layers.Lambda(lambda x: tf.nn.depth_to_space(x, up_ratio))
         self.relu_up = layers.ReLU()
 
-        # Capa final RGB
+        # Final conv
         self.conv_final = layers.Conv2D(3, 9, padding='same', activation='sigmoid')
 
     def call(self, x, training=False):
@@ -63,14 +64,12 @@ class SRRN(keras.Model):
         x = self.bn_post_res(x, training=training)
         x = layers.add([res, x])
 
-        # Upsampling flexible
+        # Upsampling
         x = self.upsample(x)
         x = self.pixel_shuffle(x)
         x = self.relu_up(x)
 
-        # Salida final
-        x = self.conv_final(x)
-        return x
+        return self.conv_final(x)
 
     def get_config(self):
         config = super().get_config()

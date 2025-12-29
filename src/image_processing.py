@@ -1,4 +1,6 @@
 import math
+import os
+import tensorflow as tf
 import numpy as np
 
 def downscale(original_image: np.array, ratio: int, scaling_snap: str = "round") -> np.array:
@@ -46,3 +48,42 @@ def downscale(original_image: np.array, ratio: int, scaling_snap: str = "round")
     downscaled_image = downscaled_image.astype(original_image.dtype)
 
     return downscaled_image
+
+
+def load_image_paths(folder: str) -> list[str]:
+    """
+    Given a folder path, returns a list of image paths (only .jpg and .png files).
+
+    Args:
+        folder (str): Path to the folder containing images.
+
+    Returns:
+        list: List of image file paths in the folder.
+    """
+    return [
+        os.path.join(folder, f)
+        for f in os.listdir(folder)
+        if f.endswith(".png") or f.endswith(".jpg")
+    ]
+
+def load_and_preprocess(path: str, hr_size: tuple, up_ratio: int) -> tuple:
+    """
+    Loads and preprocesses an image by reading the file, resizing to high resolution, and creating a low-resolution version.
+
+    Args:
+        path (str): File path of the image.
+        hr_size (tuple): Desired high-resolution size (height, width).
+        up_ratio (int): Upscaling ratio used to generate the low-resolution image.
+
+    Returns:
+        tuple: A tuple containing the low-resolution and high-resolution images.
+    """
+        
+    img = tf.io.read_file(path)
+    img = tf.image.decode_image(img, channels=3, expand_animations=False)
+    img = tf.image.resize(img, hr_size)
+    img = tf.cast(img, tf.float32) / 255.0
+
+    lr = tf.image.resize(img, (hr_size[0] // up_ratio, hr_size[1] // up_ratio), method="area")
+
+    return lr, img
