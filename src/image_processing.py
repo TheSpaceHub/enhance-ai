@@ -66,7 +66,7 @@ def load_image_paths(folder: str) -> list[str]:
         if f.endswith(".png") or f.endswith(".jpg")
     ]
 
-def load_and_preprocess(path: str, hr_size: tuple, up_ratio: int) -> tuple:
+def load_and_preprocess(path: str, hr_size: tuple = None, up_ratio: int = 4) -> tuple:
     """
     Loads and preprocesses an image by reading the file, resizing to high resolution, and creating a low-resolution version.
 
@@ -81,7 +81,11 @@ def load_and_preprocess(path: str, hr_size: tuple, up_ratio: int) -> tuple:
         
     img = tf.io.read_file(path)
     img = tf.image.decode_image(img, channels=3, expand_animations=False)
-    img = tf.image.resize(img, hr_size)
+    if hr_size is not None:
+        img = tf.image.resize(img, hr_size)
+    else:
+        shape = tf.shape(img)
+        hr_size = (shape[0], shape[1])
     img = tf.cast(img, tf.float32) / 255.0
 
     lr = tf.image.resize(img, (hr_size[0] // up_ratio, hr_size[1] // up_ratio), method="area")
