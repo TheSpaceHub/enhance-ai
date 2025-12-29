@@ -36,7 +36,7 @@ class Upscaler(layers.Layer):
 class Average(keras.Model):
     """Defines a model which upscales images by averaging. Training does not modify its behavior"""
 
-    def __init__(self, up_ratio=2, name="average", **kwargs):
+    def __init__(self, up_ratio=2.0, name="average", **kwargs):
         super().__init__(name=name, **kwargs)
         self.up_ratio = up_ratio
         self.upscaler = Upscaler(up_ratio)
