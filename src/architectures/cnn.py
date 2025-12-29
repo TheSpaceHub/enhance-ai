@@ -5,16 +5,17 @@ from .average import Upscaler
 
 @keras.saving.register_keras_serializable()
 class CNNUpscaler(keras.Model):
-    """Convolutional Neural Network for image upscaling."""
+    """Convolutional Neural Network for image upscaling. It's just a simple model: upscales first, then applies convolution corrections."""
+
     def __init__(self, up_ratio: float, name="cnnupscaler", **kwargs):
         super().__init__(name=name, **kwargs)
         self.up_ratio = up_ratio
         
         self.upscaler = Upscaler(up_ratio)
         
-        self.conv1 = layers.Conv2D(64, (9, 9), activation="relu", padding="same")
-        self.conv2 = layers.Conv2D(32, (5, 5), activation="relu", padding="same")
-        self.conv3 = layers.Conv2D(3, (5, 5), padding="same")
+        self.conv1 = layers.Conv2D(64, (3, 3), activation="relu", padding="same")
+        self.conv2 = layers.Conv2D(32, (3, 3), activation="relu", padding="same")
+        self.conv3 = layers.Conv2D(3, (3, 3), padding="same")
 
     def call(self, inputs):
         # Upscale first
