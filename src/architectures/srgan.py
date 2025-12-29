@@ -21,7 +21,7 @@ class DiscBlock(layers.Layer):
 
 @keras.saving.register_keras_serializable()
 class Discriminator(keras.Model):
-    """Discriminador tipo PatchGAN para SRGAN"""
+    """Discriminator for SRGAN"""
     def __init__(self, name="discriminator", **kwargs):
         super().__init__(name=name, **kwargs)
         
