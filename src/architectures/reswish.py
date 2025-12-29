@@ -4,6 +4,41 @@ from keras import layers
 
 
 @keras.saving.register_keras_serializable()
+class ChannelAttention(layers.Layer):
+    """
+    Channel attention https://arxiv.org/pdf/1807.02758
+    """
+
+    def __init__(self, channels: int, reduction: int = 16, **kwargs):
+        super().__init__(**kwargs)
+        self.channels = channels
+        self.reduction = reduction
+
+        # Global Average Pooling
+        self.gap = layers.GlobalAveragePooling2D()
+
+        # Little bit of dense
+        self.dense1 = layers.Dense(channels // reduction, activation="relu")
+        self.dense2 = layers.Dense(channels, activation="sigmoid")
+
+        # Reshape
+        self.reshape = layers.Reshape((1, 1, channels))
+
+    def call(self, inputs):
+        x = self.gap(inputs)
+        x = self.dense1(x)
+        x = self.dense2(x)
+        x = self.reshape(x)
+
+        return inputs * x
+
+    def get_config(self):
+        config = super().get_config()
+        config.update({"channels": self.channels, "reduction": self.reduction})
+        return config
+
+
+@keras.saving.register_keras_serializable()
 class ReswishLayer(layers.Layer):
     """
     A ReswishLayer is a residual block which aims to combine convolutions with trainable activation layers in order to produce complex models capable of learning different behaviors.
@@ -21,38 +56,23 @@ class ReswishLayer(layers.Layer):
         self.filters = filters
 
         # 2D Convolution
-        self.conv = layers.Conv2D(filters, (3, 3), padding="same", use_bias=False)
-        # Normalize
-        self.bn1 = layers.BatchNormalization()
+        self.conv = layers.Conv2D(filters, (3, 3), padding="same")
         # Swish it
         self.sw1 = layers.Activation("swish")
 
-        # Weight
-        self.dnn1 = layers.Conv2D(filters, (1, 1), padding="valid", use_bias=False)
-        # Normalize
-        self.bn2 = layers.BatchNormalization()
-        # Swish it
-        self.sw2 = layers.Activation("swish")
-
-        # Repeat
-        self.dnn2 = layers.Conv2D(filters, (1, 1), padding="valid", use_bias=False)
-        self.bn3 = layers.BatchNormalization()
-        self.sw3 = layers.Activation("swish")
+        # Conv again
+        self.conv2 = layers.Conv2D(filters, (3, 3), padding="same")
+        
+        # Channel attention
+        self.ca = ChannelAttention(filters, reduction=16)
 
     def call(self, inputs):
         res = inputs
 
         x = self.conv(inputs)
-        x = self.bn1(x)
         x = self.sw1(x)
-
-        x = self.dnn1(x)
-        x = self.bn2(x)
-        x = self.sw2(x)
-
-        x = self.dnn2(x)
-        x = self.bn3(x)
-        x = self.sw3(x)
+        x = self.conv2(x)
+        x = self.ca(x)
 
         return layers.add([res, x])
 
@@ -78,16 +98,53 @@ class PixelShuffleUpscale(layers.Layer):
         self.conv = layers.Conv2D(
             filters * shuffle_num * shuffle_num, (3, 3), padding="same"
         )
-        self.sw = layers.Activation("swish")
 
     def call(self, inputs):
         x = self.conv(inputs)
-        x = self.sw(x)
-        return tf.nn.depth_to_space(x, block_size=self.shuffle_num)
+        x = tf.nn.depth_to_space(x, block_size=self.shuffle_num)
+        return x
 
     def get_config(self):
         config = super().get_config()
         config.update({"filters": self.filters, "shuffle_num": self.shuffle_num})
+        return config
+
+
+@keras.saving.register_keras_serializable()
+class ColorConstraint(layers.Layer):
+    """
+    Calculates the color consistency error and adds it to the model's loss
+    without modifying the image pixels directly.
+    """
+
+    def __init__(self, up_ratio: int, weight: float = 0.5, **kwargs):
+        super().__init__(**kwargs)
+        self.up_ratio = up_ratio
+        self.weight = weight
+
+    def call(self, inputs):
+        # inputs must be [gen, og]
+        gen, og = inputs
+
+        # Downscale to compare
+        gen_downscaled = tf.nn.avg_pool2d(
+            gen, ksize=self.up_ratio, strides=self.up_ratio, padding="VALID"
+        )
+
+        # Get error
+        color_error = tf.reduce_mean(tf.abs(og - gen_downscaled))
+
+        # Add loss
+        self.add_loss(color_error * self.weight)
+
+        return gen
+
+    def compute_output_shape(self, input_shape):
+        return input_shape[0]
+
+    def get_config(self):
+        config = super().get_config()
+        config.update({"up_ratio": self.up_ratio, "weight": self.weight})
         return config
 
 
@@ -97,7 +154,7 @@ class Reswish(keras.Model):
 
     def __init__(
         self,
-        filters: int = 32,
+        filters: int = 64,
         blocks: int = 4,
         up_ratio: int = 5,
         name="Reswish",
@@ -121,6 +178,9 @@ class Reswish(keras.Model):
         for _ in range(blocks):
             x = ReswishLayer(filters)(x)
 
+        # Extra conv to keep it on its toes
+        x = layers.Conv2D(filters, (3, 3), padding="same")(x)
+
         # Add res back
         x = layers.add([x, res])
 
@@ -128,7 +188,10 @@ class Reswish(keras.Model):
         x = PixelShuffleUpscale(filters=filters, shuffle_num=up_ratio)(x)
 
         # Collapse to RGB
-        outputs = layers.Conv2D(3, (3, 3), padding="same", activation="sigmoid")(x)
+        x = layers.Conv2D(3, (3, 3), padding="same", activation=None)(x)
+
+        # Correct
+        outputs = ColorConstraint(up_ratio)([x, inputs])
 
         # Create whole model
         super().__init__(inputs, outputs, name=name, **kwargs)
