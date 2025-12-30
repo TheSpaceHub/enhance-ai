@@ -9,7 +9,8 @@ import os
 import sys
 import time
 import math
-
+import csv
+from pathlib import Path
 
 def load_vgg(path: str) -> keras.Model:
     """Loads VGG19 model from local memory if it exists; otherwise downloads it from the Internet.
@@ -73,7 +74,7 @@ def get_perceptual_loss(y_true, y_pred, vgg_features) -> float:
         tf.cast(tf.reduce_mean(tf.abs(features_true - features_pred)), dtype=tf.float32)
     )
 
-
+@tf.function
 def get_metrics(
     models: list[keras.Model],
     lr_images: list,
@@ -179,16 +180,51 @@ def plot_metrics(
         # Add names to points
         plt.annotate(name, (x, y), textcoords="offset points", xytext=(5, 5), ha="left")
 
-    plt.savefig("model_metrics.png")
+    plt.savefig("results/model_metrics.png")
     plt.show()
 
+def save_metrics_csv(
+    mae_losses,
+    perceptual_losses,
+    runtimes,
+    names: list[str],
+):
+    """Saves a csv with all the metrics given by the input.
 
+    Args:
+        mae_losses (list): Average MAE for each model.
+        perceptual_losses (list): Average perceptual loss for each model.
+        runtimes (list[float]): Average runtime for each model.
+        names (list[str]): Model names.
+    """
+
+    # Set the path
+    output_path = Path("results/model_metrics.csv")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(output_path, mode="w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["model", "mae", "perceptual_loss", "runtime_sec"])
+
+        for i, name in enumerate(names):
+            writer.writerow([
+                name,
+                float(mae_losses[i]),
+                float(perceptual_losses[i]),
+                float(runtimes[i]),
+            ])
+            
 def main():
     # Define constants
     BATCH_SIZE = 64
-    IMAGES_PATH = "data/DIV2K_train_HR/DIV2K_train_HR/"
+    IMAGES_PATH = "data/DIV2K_train_HR/"
     MODEL_FOLDER_PATH = "models/"
-    MODEL_NAMES = ["cnnu_e30_sc4.keras", "srgan_e30_sc4_rb8f64_l005.keras"]
+    MODEL_NAMES = [
+        "cnnu_e30_sc4.keras",
+        "espcn_e30_sc4.keras",
+        "srrn_e30_sc4_rb8f64.keras",
+        "srgan_e30_sc4_rb8f64_l005.keras",
+        ]
     MAX_DATASET_SIZE = 1
 
     # Set matplotlib font to be small
@@ -202,11 +238,13 @@ def main():
 
     # Load models
     models = []
+    model_labels = []
     for name in MODEL_NAMES:
         try:
-            models.append(
-                keras.models.load_model(os.path.join(MODEL_FOLDER_PATH, name))
-            )
+            model = keras.models.load_model(os.path.join(MODEL_FOLDER_PATH, name))
+            models.append(model)
+            model_labels.append(model.name)
+            
         except Exception as e:
             print(f"Could not load model {name}: {str(e)}")
 
@@ -256,9 +294,22 @@ def main():
     mae_losses /= len(img_paths)
     perceptual_losses /= len(img_paths)
     runtimes /= len(img_paths)
+    
+    # Ensure the output directory for the results exists
+    output_dir = 'results'
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir) 
 
     # Plot and save metrics
-    plot_metrics(mae_losses, perceptual_losses, runtimes, MODEL_NAMES)
+    plot_metrics(mae_losses, perceptual_losses, runtimes, model_labels)
+    
+    # Save in csv
+    save_metrics_csv(
+        names=model_labels,
+        mae_losses=mae_losses,
+        perceptual_losses=perceptual_losses,
+        runtimes=runtimes,
+    )
 
 
 if __name__ == "__main__":
