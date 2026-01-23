@@ -1,66 +1,74 @@
 // lib/ui/widgets/main_workspace.dart
 import 'package:flutter/material.dart';
+import '../models/sr_experiment.dart';
 import 'image_holder.dart';
-import '../widgets/before_after_slider.dart';
+import 'before_after_slider.dart';
 
 class MainWorkspace extends StatelessWidget {
-  final bool imageLoaded;
   final Image? originalImage;
-  final Image? srImage;
+  final SRRun? activeRun; // El run que estamos viendo ahora
   final VoidCallback onUpload;
-  final bool isProcessing;
 
   const MainWorkspace({
     super.key,
-    required this.imageLoaded,
     required this.originalImage,
-    required this.srImage,
+    required this.activeRun,
     required this.onUpload,
-    required this.isProcessing,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Stage 1: image is not loaded
-    if (!imageLoaded) {
+    // 1. Estado Vacío (Sin proyecto)
+    if (originalImage == null) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.image_outlined, size: 80, color: Colors.white54),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: onUpload,
-              child: const Text('Upload Image'),
+            const Icon(Icons.science_outlined, size: 64, color: Colors.white10),
+            const SizedBox(height: 16),
+            const Text(
+              "No project selected",
+              style: TextStyle(color: Colors.white24),
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton(onPressed: onUpload, child: const Text("Start New")),
+          ],
+        ),
+      );
+    }
+
+    // 2. Si hay Run y se está procesando
+    if (activeRun != null && activeRun!.isProcessing) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(color: Colors.blueAccent),
+            const SizedBox(height: 20),
+            Text(
+              "Upscaling with ${activeRun!.modelName}...",
+              style: const TextStyle(color: Colors.white70),
             ),
           ],
         ),
       );
     }
 
-    // Stage 2: image loaded but not processed yet
-    if (srImage == null && originalImage != null) {
-      return ImageHolder(image: originalImage!);
-    }
-
-    // Stage 3: loading screen
-    if (isProcessing) {
-      return const Center(
-        child: CircularProgressIndicator(color: Colors.greenAccent),
-      );
-    }
-
-    // Stage 4: show results Before/After Slider
-    if (srImage != null && originalImage != null) {
+    // 3. Si hay Run terminado -> Comparador
+    if (activeRun != null && activeRun!.resultImage != null) {
       return Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: BeforeAfterSlider(
-          beforeImage: originalImage!,
-          afterImage: srImage!,
+        padding: const EdgeInsets.all(24.0),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: BeforeAfterSlider(
+            beforeImage: originalImage!,
+            afterImage: activeRun!.resultImage!,
+          ),
         ),
       );
     }
 
-    return Center(child: originalImage);
+    // 4. Solo imagen original (Proyecto nuevo sin runs)
+    return ImageHolder(image: originalImage!);
   }
 }
