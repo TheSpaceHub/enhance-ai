@@ -1,4 +1,7 @@
+// lib/ui/pages/home_page.dart
 import 'package:flutter/material.dart';
+import '../widgets/left_nav.dart';
+import '../widgets/main_workspace.dart';
 import '../widgets/right_panel.dart';
 
 class HomePage extends StatefulWidget {
@@ -9,12 +12,11 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  bool imageLoaded = false; // Imagen cargada
-  bool processing = false; // Procesando SR
+  bool imageLoaded = false;
+  bool processing = false;
   Image? originalImage;
-  Image? srImage; // Imagen superresolucionada
+  Image? srImage;
 
-  // Simula cargar una imagen
   void loadImage() {
     setState(() {
       originalImage = Image.asset('assets/lr_sample.png');
@@ -22,17 +24,15 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  // Simula procesar imagen
   Future<void> processImage() async {
     setState(() {
       processing = true;
     });
 
-    // Aquí iría tu llamada al ML
     await Future.delayed(const Duration(seconds: 3));
 
     setState(() {
-      srImage = Image.asset('assets/sr_sample.png'); // Imagen SR simulada
+      srImage = Image.asset('assets/sr_sample.png');
       processing = false;
     });
   }
@@ -42,49 +42,24 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       body: Row(
         children: [
-          // Sidebar Izquierda
-          Container(
-            width: 80,
-            color: Colors.grey[850],
-            child: Column(
-              children: const [
-                SizedBox(height: 50),
-                Icon(Icons.history, color: Colors.white),
-                SizedBox(height: 10),
-                Icon(Icons.folder, color: Colors.white),
-              ],
-            ),
-          ),
+          // Left tab
+          LeftNav(),
 
-          // Área Central
+          // Middle tab
           Expanded(
-            child: Center(
-              child: imageLoaded
-                  ? (processing
-                        ? const CircularProgressIndicator(
-                            color: Colors.greenAccent,
-                          )
-                        : SizedBox(
-                            width: 800, // ancho fijo
-                            height: 800, // alto fijo
-                            child: FittedBox(
-                              fit: BoxFit.contain, // mantiene proporción
-                              child: srImage ?? originalImage,
-                            ),
-                          ))
-                  : ElevatedButton(
-                      onPressed: loadImage,
-                      child: const Text('Upload Image'),
-                    ),
+            child: MainWorkspace(
+              imageLoaded: imageLoaded,
+              originalImage: originalImage,
+              srImage: srImage,
+              onUpload: loadImage,
+              isProcessing: processing,
             ),
           ),
 
-          // Right Panel
+          // Right tab
           RightPanel(
             imageLoaded: imageLoaded,
-            onUpscale: () async {
-              await processImage();
-            },
+            onUpscale: () async => await processImage(),
             isProcessing: processing,
           ),
         ],

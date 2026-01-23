@@ -1,3 +1,4 @@
+// lib/ui/widgets/right_panel.dart
 import 'package:flutter/material.dart';
 
 class RightPanel extends StatefulWidget {
