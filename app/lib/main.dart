@@ -1,4 +1,4 @@
-// lib/ui/main.dart
+// lib/main.dart
 import 'package:flutter/material.dart';
 import 'ui/pages/home_page.dart';
 

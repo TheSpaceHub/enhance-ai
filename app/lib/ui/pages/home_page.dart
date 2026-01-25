@@ -1,5 +1,7 @@
-// lib/ui/pages/home_page.dart
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+import '../../services/api_service.dart';
 import '../models/sr_experiment.dart';
 import '../widgets/left_nav.dart';
 import '../widgets/main_workspace.dart';
@@ -13,55 +15,82 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // Lista Maestra de Proyectos
   final List<SRProject> projects = [];
-
-  // Estado Actual
   SRProject? selectedProject;
   SRRun? selectedRun;
 
-  // 1. Crear Nuevo Proyecto (Upload)
-  void createNewProject() {
-    final newId = DateTime.now().millisecondsSinceEpoch.toString();
-    final newProject = SRProject(
-      id: newId,
-      name: "Image_${newId.substring(newId.length - 4)}",
-      timestamp: DateTime.now(),
-      originalImage: Image.asset('assets/lr_sample.png'), // Tu imagen asset
-      runs: [],
-    );
-
+  // Loading Screen
+  void resetToUploadScreen() {
     setState(() {
-      projects.insert(0, newProject);
-      selectedProject = newProject;
+      selectedProject = null;
       selectedRun = null;
     });
   }
 
-  // 2. Seleccionar Proyecto (Click en Sidebar)
+  // ACCIÓN 2: Botón central -> Abre el selector de archivos y crea el proyecto
+  Future<void> pickAndCreateProject() async {
+    print("Intentando abrir selector de archivos...");
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        withData: true, // OBLIGATORIO para Web
+      );
+
+      if (result != null) {
+        // En Web usamos 'bytes', no 'path'
+        Uint8List? fileBytes = result.files.first.bytes;
+        String fileName = result.files.first.name;
+
+        if (fileBytes == null) {
+          print("ERROR: No se pudieron leer los bytes (es null).");
+          return;
+        }
+
+        print("Archivo seleccionado: $fileName");
+
+        final newId = DateTime.now().millisecondsSinceEpoch.toString();
+
+        final newProject = SRProject(
+          id: newId,
+          name: fileName,
+          timestamp: DateTime.now(),
+          originalImage: Image.memory(fileBytes), // Visualización
+          rawBytes: fileBytes, // Datos para la API
+          runs: [],
+        );
+
+        setState(() {
+          projects.insert(0, newProject);
+          selectedProject = newProject;
+        });
+      } else {
+        print("El usuario canceló la selección.");
+      }
+    } catch (e) {
+      print("CRASH al seleccionar archivo: $e");
+    }
+  }
+
   void selectProject(SRProject project) {
     setState(() {
       selectedProject = project;
-      // Selecciona el último run automáticamente si existe
       selectedRun = project.runs.isNotEmpty ? project.runs.first : null;
     });
   }
 
-  // 3. Seleccionar Run (Click en historial del Panel Derecho)
   void selectRun(SRRun run) {
     setState(() {
       selectedRun = run;
     });
   }
 
-  // 4. Ejecutar Upscale (Click en botón RUN)
   Future<void> runUpscale(String model, double factor) async {
     if (selectedProject == null) return;
 
+    final Uint8List originalBytes = selectedProject!.rawBytes;
     final runId = DateTime.now().millisecondsSinceEpoch.toString();
 
-    // A. Crear Run en estado "Cargando"
-    final newRun = SRRun(
+    final processingRun = SRRun(
       id: runId,
       modelName: model,
       upscaleFactor: factor,
@@ -69,42 +98,36 @@ class _HomePageState extends State<HomePage> {
     );
 
     setState(() {
-      // Añadimos el run al proyecto actual
-      final updatedProject = selectedProject!.addRun(newRun);
-
-      // Actualizamos la lista global
-      final index = projects.indexWhere((p) => p.id == updatedProject.id);
-      projects[index] = updatedProject;
-
-      // Actualizamos selección
-      selectedProject = updatedProject;
-      selectedRun = newRun;
+      selectedProject = selectedProject!.addRun(processingRun);
+      // Actualizamos la lista global para que se guarde el cambio
+      final idx = projects.indexWhere((p) => p.id == selectedProject!.id);
+      if (idx != -1) projects[idx] = selectedProject!;
+      selectedRun = processingRun;
     });
 
-    // B. Simulación Backend
-    await Future.delayed(const Duration(seconds: 2));
+    SRRun resultRun;
+    try {
+      resultRun = await ApiService.upscaleImage(
+        imageBytes: originalBytes,
+        modelName: model,
+        factor: factor,
+      );
+    } catch (e) {
+      print("Error Upscaling: $e");
+      resultRun = processingRun.copyWith(
+        isProcessing: false,
+        metrics: {'Error': 'Failed', 'Msg': 'Server Error'},
+      );
+    }
 
-    // C. Resultado Final
     if (!mounted) return;
 
     setState(() {
-      // Recuperamos el proyecto actual (por seguridad)
       final currentProj = projects.firstWhere(
         (p) => p.id == selectedProject!.id,
       );
-
-      // Creamos el run finalizado
-      final finishedRun = newRun.copyWith(
-        isProcessing: false,
-        resultImage: Image.asset(
-          'assets/sr_sample.png',
-        ), // Tu imagen resultado asset
-        metrics: {'MAE': 0.045, 'PSNR': '28.5dB', 'Time': '1.2s'},
-      );
-
-      // Reemplazamos el run viejo por el nuevo en la lista
       final updatedRuns = currentProj.runs
-          .map((r) => r.id == runId ? finishedRun : r)
+          .map((r) => r.isProcessing ? resultRun : r)
           .toList();
 
       final finalProject = SRProject(
@@ -112,13 +135,14 @@ class _HomePageState extends State<HomePage> {
         name: currentProj.name,
         timestamp: currentProj.timestamp,
         originalImage: currentProj.originalImage,
+        rawBytes: currentProj.rawBytes,
         runs: updatedRuns,
       );
 
       final pIndex = projects.indexWhere((p) => p.id == finalProject.id);
       projects[pIndex] = finalProject;
       selectedProject = finalProject;
-      selectedRun = finishedRun;
+      selectedRun = resultRun;
     });
   }
 
@@ -127,24 +151,19 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       body: Row(
         children: [
-          // Sidebar
           LeftNav(
             projects: projects,
             selectedId: selectedProject?.id,
             onSelect: selectProject,
-            onNewProject: createNewProject,
+            onNewProject: resetToUploadScreen, // <--- Botón Sidebar
           ),
-
-          // Workspace
           Expanded(
             child: MainWorkspace(
               originalImage: selectedProject?.originalImage,
               activeRun: selectedRun,
-              onUpload: createNewProject,
+              onUpload: pickAndCreateProject, // <--- Botón Central
             ),
           ),
-
-          // Panel Derecho
           RightPanel(
             hasProject: selectedProject != null,
             runsHistory: selectedProject?.runs ?? [],

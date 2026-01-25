@@ -4,8 +4,8 @@ import '../models/sr_experiment.dart';
 
 class RightPanel extends StatefulWidget {
   final bool hasProject;
-  final List<SRRun> runsHistory; // Historial del proyecto actual
-  final SRRun? activeRun; // El run seleccionado
+  final List<SRRun> runsHistory;
+  final SRRun? activeRun;
   final Function(SRRun) onRunSelect;
   final Function(String model, double factor) onUpscale;
 
@@ -25,7 +25,7 @@ class RightPanel extends StatefulWidget {
 class _RightPanelState extends State<RightPanel> {
   double upscaleFactor = 4;
   String selectedModel = 'ESPCN';
-  final List<String> models = ['ESPCN', 'SRResNet', 'SRGAN'];
+  final List<String> models = ['CNNU', 'ESPCN', 'SRResNet', 'SRGAN'];
 
   @override
   Widget build(BuildContext context) {

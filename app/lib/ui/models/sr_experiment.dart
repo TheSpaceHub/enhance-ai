@@ -1,4 +1,5 @@
 // lib/ui/models/sr_experiment.dart
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 // 1. EL PROYECTO (La "Caja" contenedora: Una imagen subida)
@@ -7,6 +8,7 @@ class SRProject {
   final String name;
   final DateTime timestamp;
   final Image originalImage;
+  final Uint8List rawBytes;
 
   // Lista de intentos (Runs) sobre esta imagen
   final List<SRRun> runs;
@@ -16,6 +18,7 @@ class SRProject {
     required this.name,
     required this.timestamp,
     required this.originalImage,
+    required this.rawBytes,
     this.runs = const [],
   });
 
@@ -26,6 +29,7 @@ class SRProject {
       name: name,
       timestamp: timestamp,
       originalImage: originalImage,
+      rawBytes: rawBytes,
       runs: [run, ...runs], // Lo pone el primero de la lista
     );
   }

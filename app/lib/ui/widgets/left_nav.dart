@@ -24,25 +24,46 @@ class LeftNav extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Logo Area
+          const Padding(
+            padding: EdgeInsets.fromLTRB(20, 30, 20, 10),
+            child: Text(
+              "EnhanceAI",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1,
+              ),
+            ),
+          ),
+
           // Botón Nuevo Proyecto
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: ElevatedButton.icon(
               onPressed: onNewProject,
-              icon: const Icon(Icons.add_photo_alternate),
+              icon: const Icon(Icons.add),
               label: const Text("New Project"),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent,
+                backgroundColor: const Color(0xFF333333),
                 foregroundColor: Colors.white,
+                elevation: 0,
                 minimumSize: const Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: const BorderSide(color: Colors.white12),
+                ),
               ),
             ),
           ),
-          const Divider(color: Colors.white12),
+
+          const Divider(color: Colors.white10),
+
           const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Text(
-              "PROJECTS",
+              "HISTORY",
               style: TextStyle(
                 color: Colors.white38,
                 fontSize: 11,
@@ -51,59 +72,75 @@ class LeftNav extends StatelessWidget {
               ),
             ),
           ),
+
           // Lista de Proyectos
           Expanded(
-            child: ListView.builder(
-              itemCount: projects.length,
-              itemBuilder: (context, index) {
-                final project = projects[index];
-                final isSelected = project.id == selectedId;
+            child: projects.isEmpty
+                ? const Center(
+                    child: Text(
+                      "No projects yet",
+                      style: TextStyle(color: Colors.white24),
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: projects.length,
+                    itemBuilder: (context, index) {
+                      final project = projects[index];
+                      final isSelected = project.id == selectedId;
 
-                return Container(
-                  color: isSelected ? Colors.white.withOpacity(0.05) : null,
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    onTap: () => onSelect(project),
-                    leading: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: Colors.white12),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(5),
-                        child: FittedBox(
-                          fit: BoxFit.cover,
-                          child: project.originalImage,
+                      return Container(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
                         ),
-                      ),
-                    ),
-                    title: Text(
-                      project.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.white70,
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.normal,
-                      ),
-                    ),
-                    subtitle: Text(
-                      "${project.runs.length} runs",
-                      style: const TextStyle(
-                        color: Colors.white30,
-                        fontSize: 12,
-                      ),
-                    ),
+                        decoration: BoxDecoration(
+                          color: isSelected ? const Color(0xFF37373D) : null,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
+                          onTap: () => onSelect(project),
+                          leading: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: Colors.white12),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(3),
+                              child: FittedBox(
+                                fit: BoxFit.cover,
+                                child: project.originalImage,
+                              ),
+                            ),
+                          ),
+                          title: Text(
+                            project.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : Colors.white70,
+                              fontSize: 13,
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
+                            ),
+                          ),
+                          subtitle: Text(
+                            "${project.runs.length} enhancements",
+                            style: const TextStyle(
+                              color: Colors.white30,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
         ],
       ),
