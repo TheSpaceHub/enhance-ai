@@ -1,71 +1,73 @@
-// lib/ui/models/sr_experiment.dart
 import 'dart:typed_data';
-import 'package:flutter/material.dart';
 
-// 1. EL PROYECTO (La "Caja" contenedora: Una imagen subida)
+/// Represents a super-resolution project containing the original image and its runs
 class SRProject {
   final String id;
   final String name;
   final DateTime timestamp;
-  final Image originalImage;
-  final Uint8List rawBytes;
+  final Uint8List originalBytes;
 
-  // Lista de intentos (Runs) sobre esta imagen
   final List<SRRun> runs;
 
   SRProject({
     required this.id,
     required this.name,
     required this.timestamp,
-    required this.originalImage,
-    required this.rawBytes,
+    required this.originalBytes,
     this.runs = const [],
   });
 
-  // Helper para añadir un Run nuevo y devolver una COPIA del proyecto
+  /// Returns a new project instance with an additional run appended immutably
   SRProject addRun(SRRun run) {
     return SRProject(
       id: id,
       name: name,
       timestamp: timestamp,
-      originalImage: originalImage,
-      rawBytes: rawBytes,
-      runs: [run, ...runs], // Lo pone el primero de la lista
+      originalBytes: originalBytes,
+      runs: [run, ...runs],
     );
   }
 }
 
-// 2. EL RUN (Un intento específico: Modelo + Params + Resultado)
+/// Represents a single super-resolution inference run
 class SRRun {
   final String id;
   final String modelName;
   final double upscaleFactor;
   final bool isProcessing;
-
-  final Image? resultImage;
+  final Uint8List? resultBytes;
   final Map<String, dynamic> metrics;
+
+  // Nuevos campos técnicos
+  final String device; // 'CPU' o 'GPU'
+  final String inferenceTime; // Ej: "120ms"
 
   SRRun({
     required this.id,
     required this.modelName,
     required this.upscaleFactor,
     this.isProcessing = false,
-    this.resultImage,
+    this.resultBytes,
     this.metrics = const {},
+    this.device = 'GPU', // Default
+    this.inferenceTime = 'N/A',
   });
 
   SRRun copyWith({
     bool? isProcessing,
-    Image? resultImage,
+    Uint8List? resultBytes,
     Map<String, dynamic>? metrics,
+    String? inferenceTime,
   }) {
     return SRRun(
       id: id,
       modelName: modelName,
       upscaleFactor: upscaleFactor,
       isProcessing: isProcessing ?? this.isProcessing,
-      resultImage: resultImage ?? this.resultImage,
+      resultBytes: resultBytes ?? this.resultBytes,
       metrics: metrics ?? this.metrics,
+      device: device,
+      inferenceTime: inferenceTime ?? this.inferenceTime,
     );
   }
 }
