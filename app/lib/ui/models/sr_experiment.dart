@@ -7,7 +7,7 @@ class SRProject {
   final DateTime timestamp;
   final Uint8List originalBytes;
 
-  final List<SRRun> runs;
+  List<SRRun> runs;
 
   SRProject({
     required this.id,
@@ -17,15 +17,9 @@ class SRProject {
     this.runs = const [],
   });
 
-  /// Returns a new project instance with an additional run appended immutably
-  SRProject addRun(SRRun run) {
-    return SRProject(
-      id: id,
-      name: name,
-      timestamp: timestamp,
-      originalBytes: originalBytes,
-      runs: [run, ...runs],
-    );
+  /// Adds new run to project
+  void addRun(SRRun run) {
+    runs = [run, ...runs];
   }
 }
 
