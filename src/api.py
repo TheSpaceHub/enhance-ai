@@ -12,7 +12,7 @@ from architectures import *
 
 # Logging configuration for observability and debugging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("SR-LAB-API")
+logger = logging.getLogger("API")
 
 # FastAPI application entry point
 app = FastAPI(title="Enhance AI")
@@ -43,19 +43,26 @@ loaded_models = {}
 
 
 # Model registry: architecture name -> scale factor -> model file path
+MODEL_PATH = "../models/"
 MODEL_FILES = {
+    "Average":{
+        2: MODEL_PATH + "average_sc2.keras",
+        4: MODEL_PATH + "average_sc4.keras"
+    },
     "CNNU": {
-        2: "../models/cnnu_x2.keras", # future x2 model
-        4: "../models/cnnu_e30_sc4.keras",
+        2: MODEL_PATH + "cnnu_x2.keras", # doesn't exist yet
+        4: MODEL_PATH + "cnnu_e30_sc4.keras",
     },
     "ESPCN": {
-        2: "../models/espcn_x2.keras",
-        4: "../models/espcn_e30_sc4.keras",
+        2: MODEL_PATH + "espcn_x2.keras", # doesn't exist yet
+        4: MODEL_PATH + "espcn_e30_sc4.keras",
     },
     "SRGAN": {
-        4: "../models/srgan_e30_sc4_rb8f64_l005.keras",
+        2: MODEL_PATH + "srgan_sc2.keras", # doesn't exist yet
+        4: MODEL_PATH + "srgan_e30_sc4_rb8f64_l005.keras",
     },
     "SRResNet": {
+        2: MODEL_PATH + "SRResNet_sc2.keras", # doesn't exist yet
         4: "../models/srrn_e30_sc4_rb8f64.keras",
     },
 }
@@ -73,24 +80,15 @@ def get_model(model_name: str, scale: int):
         )
 
     if scale not in MODEL_FILES[model_name]:
-        # Temporary fallback to x4 if requested scale is unavailable
-        if 4 in MODEL_FILES[model_name]:
-            logger.warning(
-                f"Requested x{scale} not found for {model_name}, falling back to x4."
-            )
-            scale_key = 4
-        else:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Model '{model_name}' x{scale} is not available.",
-            )
-    else:
-        scale_key = scale
+        raise HTTPException(
+            status_code=404,
+            detail=f"Model '{model_name}' x{scale} is not available.",
+        )
 
-    cache_key = f"{model_name}_x{scale_key}"
+    cache_key = f"{model_name}_x{scale}"
 
     if cache_key not in loaded_models:
-        model_path = MODEL_FILES[model_name][scale_key]
+        model_path = MODEL_FILES[model_name][scale]
         logger.info(f"Loading model {cache_key} from {model_path}")
         try:
             loaded_models[cache_key] = tf.keras.models.load_model(
@@ -106,6 +104,40 @@ def get_model(model_name: str, scale: int):
 
     return loaded_models[cache_key]
 
+def predict(
+    input_img: np.ndarray,
+    model_name: str,
+    up_ratio: int,
+    device_type: str
+) -> tuple[tf.Tensor, float]:
+    """
+    Receives a tensor image and upscales it using a model with an up_ratio.
+    Returns the prediction tensor and runtime in seconds.
+    """
+
+    # Select model(s)
+    if up_ratio == 8:
+        models = [
+            get_model(model_name, 2),
+            get_model(model_name, 4),
+        ]
+    else:
+        print(model_name, up_ratio)
+        models = [get_model(model_name, up_ratio)]
+
+    # Inference with runtime measurement
+    with tf.device(device_type):
+        start_time = time.perf_counter()
+        prediction = tf.convert_to_tensor(input_img)
+
+        for model in models:
+            prediction = model(prediction, training=False)
+
+        _ = prediction.shape  # Forces execution
+        runtime = time.perf_counter() - start_time
+
+    return prediction, runtime
+
 # Image upscaling endpoint
 @app.post("/upscale")
 async def upscale(
@@ -119,15 +151,19 @@ async def upscale(
     by the selected model, scale factor, and execution device.
     """
     try:
+        print("A")
         scale_factor = int(float(scale))
 
         # Select execution device based on availability and user request
-        device_type = (
-            "/GPU:0"
-            if device.upper() == "GPU" and len(gpus) > 0
-            else "/CPU:0"
-        )
-
+        if device.upper() == "GPU" and len(gpus) < 1:
+            raise HTTPException(
+                status_code=400, 
+                detail="GPU device is selected but no GPU is detected!"
+                )
+        
+        device_type = ("/GPU:0" if device.upper() == "GPU" else "/CPU:0")
+        
+        print("B")
         logger.info(
             f"Request received: {model_name} x{scale_factor} | "
             f"Device: {device_type} | File: {file.filename}"
@@ -141,18 +177,8 @@ async def upscale(
         img_array = np.array(pil_img).astype(np.float32) / 255.0
         input_tensor = np.expand_dims(img_array, axis=0)
 
-        # Model loading
-        model = get_model(model_name, scale_factor)
-
-        # Inference with runtime measurement
-        with tf.device(device_type):
-            start_time = time.perf_counter()
-            input_tensor = tf.convert_to_tensor(input_tensor)
-
-            prediction = model(input_tensor, training=False)
-
-            _ = prediction.shape  # Forces execution
-            runtime = time.perf_counter() - start_time
+        # Upscale image
+        prediction, runtime = predict(input_tensor, model_name, scale_factor, device_type)
 
         # Post-processing
         output_tensor = tf.clip_by_value(tf.squeeze(prediction), 0.0, 1.0)
@@ -177,7 +203,9 @@ async def upscale(
                 "Device Used": device_type.replace("/", ""),
             },
         }
-
+    
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Upscale error: {e}")
         return {

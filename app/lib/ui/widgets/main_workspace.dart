@@ -48,21 +48,21 @@ class _MainWorkspaceState extends State<MainWorkspace> {
 
     // Comparison slots
     final Uint8List bytesA =
-        widget.pinnedRun?.resultBytes ?? widget.originalImageBytes!;
-    final String labelA = widget.pinnedRun != null
-        ? "Reference: ${widget.pinnedRun!.modelName}"
+        widget.activeRun?.resultBytes ?? widget.originalImageBytes!;
+    final String labelB = widget.activeRun != null
+        ? "Reference: ${widget.activeRun!.modelName}"
         : "Original Input";
 
     final Uint8List bytesB =
-        widget.activeRun?.resultBytes ?? widget.originalImageBytes!;
-    final String labelB = widget.activeRun != null
-        ? "Active: ${widget.activeRun!.modelName}"
+        widget.pinnedRun?.resultBytes ?? widget.originalImageBytes!;
+    final String labelA = widget.pinnedRun != null
+        ? "Active: ${widget.pinnedRun!.modelName}"
         : "Original Input";
 
     return Column(
       children: [
         // Workspace toolbar
-        _buildTopBar(labelB, labelA),
+        _buildTopBar(labelA, labelB),
 
         Expanded(
           child: Padding(
@@ -166,7 +166,7 @@ class _MainWorkspaceState extends State<MainWorkspace> {
               ),
               SizedBox(height: 10),
               Text(
-                "Tap to upload an image",
+                "Click here to upload an image",
                 style: TextStyle(
                   color: Colors.blueGrey,
                   fontSize: 14,

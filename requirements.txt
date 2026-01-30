@@ -3,3 +3,6 @@ tensorflow
 pytest
 pillow
 matplotlib
+uvicorn
+fastapi
+python-multipart

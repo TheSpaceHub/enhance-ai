@@ -51,9 +51,7 @@ class ApiService {
         "The server is taking too long to respond. Check your connection or backend status.",
       );
     } catch (e) {
-      throw Exception(
-        "Unable to connect to the AI server. Make sure the backend is running.",
-      );
+      throw Exception(e);
     }
   }
 
