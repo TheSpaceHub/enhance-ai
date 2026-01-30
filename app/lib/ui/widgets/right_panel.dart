@@ -256,7 +256,9 @@ class _RightPanelState extends State<RightPanel> {
                   children: [
                     _buildLabel("Scale Factor"),
                     Text(
-                      "x${upscaleFactor.toInt()}",
+                      upscaleFactor.toInt() == 8
+                          ? "x${upscaleFactor.toInt()} (experimental)"
+                          : "x${upscaleFactor.toInt()}",
                       style: const TextStyle(
                         color: Colors.blueAccent,
                         fontWeight: FontWeight.bold,
@@ -272,8 +274,8 @@ class _RightPanelState extends State<RightPanel> {
                   label: upscaleFactor == 2
                       ? "x2"
                       : upscaleFactor == 4
-                          ? "x4"
-                          : "x8 (experimental)",
+                      ? "x4"
+                      : "x8 (experimental)",
                   activeColor: Colors.blueAccent,
                   onChanged: isProcessing
                       ? null

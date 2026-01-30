@@ -46,24 +46,24 @@ loaded_models = {}
 MODEL_PATH = "../models/"
 MODEL_FILES = {
     "Average":{
-        2: MODEL_PATH + "average_sc2.keras",
-        4: MODEL_PATH + "average_sc4.keras"
+        2: MODEL_PATH + "average_x2.keras",
+        4: MODEL_PATH + "average_x4.keras"
     },
     "CNNU": {
-        2: MODEL_PATH + "cnnu_x2.keras", # doesn't exist yet
-        4: MODEL_PATH + "cnnu_e30_sc4.keras",
+        2: MODEL_PATH + "cnnu_e100_x2.keras",
+        4: MODEL_PATH + "cnnu_e100_x4.keras",
     },
     "ESPCN": {
-        2: MODEL_PATH + "espcn_x2.keras", # doesn't exist yet
-        4: MODEL_PATH + "espcn_e30_sc4.keras",
+        2: MODEL_PATH + "espcn_e100_x2.keras",
+        4: MODEL_PATH + "espcn_e100_x4.keras",
     },
     "SRGAN": {
-        2: MODEL_PATH + "srgan_sc2.keras", # doesn't exist yet
-        4: MODEL_PATH + "srgan_e30_sc4_rb8f64_l005.keras",
+        2: MODEL_PATH + "srgan_e100_b8f64_l005_x2.keras",
+        4: MODEL_PATH + "srgan_e100_b8f64_l005_x4.keras",
     },
     "SRResNet": {
-        2: MODEL_PATH + "SRResNet_sc2.keras", # doesn't exist yet
-        4: "../models/srrn_e30_sc4_rb8f64.keras",
+        2: MODEL_PATH + "srrn_e100_b8f64_x2.keras",
+        4: MODEL_PATH + "srrn_e100_b8f64_x4.keras",
     },
 }
 
