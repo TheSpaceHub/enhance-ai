@@ -28,6 +28,19 @@ class _HomePageState extends State<HomePage> {
     return ListenableBuilder(
       listenable: _controller,
       builder: (context, child) {
+
+      if (_controller.errorMessage != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(_controller.errorMessage!),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 20),
+            ),
+          );
+          _controller.clearError();
+        });
+      }
         return Scaffold(
           body: Row(
             children: [

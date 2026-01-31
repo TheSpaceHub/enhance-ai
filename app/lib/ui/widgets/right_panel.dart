@@ -39,8 +39,8 @@ class RightPanel extends StatefulWidget {
 /// Manages local UI state for model selection, scaling, and downloads
 class _RightPanelState extends State<RightPanel> {
   double upscaleFactor = 4;
-  String selectedModel = 'CNNU';
-  final List<String> models = ['CNNU', 'ESPCN', 'SRResNet', 'SRGAN'];
+  String selectedModel = 'Average';
+  final List<String> models = ['Average', 'CNNU', 'ESPCN', 'SRResNet', 'SRGAN'];
 
   /// TODO:
   void _showModelInfo(String modelKey) {
@@ -256,7 +256,9 @@ class _RightPanelState extends State<RightPanel> {
                   children: [
                     _buildLabel("Scale Factor"),
                     Text(
-                      "x${upscaleFactor.toInt()}",
+                      upscaleFactor.toInt() == 8
+                          ? "x${upscaleFactor.toInt()} (experimental)"
+                          : "x${upscaleFactor.toInt()}",
                       style: const TextStyle(
                         color: Colors.blueAccent,
                         fontWeight: FontWeight.bold,
@@ -268,11 +270,26 @@ class _RightPanelState extends State<RightPanel> {
                   value: upscaleFactor,
                   min: 2,
                   max: 8,
-                  divisions: 3,
+                  divisions: 2,
+                  label: upscaleFactor == 2
+                      ? "x2"
+                      : upscaleFactor == 4
+                      ? "x4"
+                      : "x8 (experimental)",
                   activeColor: Colors.blueAccent,
                   onChanged: isProcessing
                       ? null
-                      : (v) => setState(() => upscaleFactor = v),
+                      : (v) {
+                          double newValue;
+                          if (v < 3) {
+                            newValue = 2;
+                          } else if (v < 6) {
+                            newValue = 4;
+                          } else {
+                            newValue = 8;
+                          }
+                          setState(() => upscaleFactor = newValue);
+                        },
                 ),
 
                 const SizedBox(height: 24),

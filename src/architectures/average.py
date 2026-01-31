@@ -25,7 +25,7 @@ class Upscaler(layers.Layer):
         new_width = tf.cast(new_width, tf.int32)
 
         # Resize
-        return tf.image.resize(inputs, [new_height, new_width], method='area')
+        return tf.image.resize(inputs, [new_height, new_width], method='bilinear')
 
     def get_config(self):
         config = super().get_config()
