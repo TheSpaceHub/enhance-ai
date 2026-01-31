@@ -22,7 +22,7 @@ class StorageManager {
     Original image
   */
 
-  late Directory storageDir;
+  Directory storageDir = Directory("");
   bool loaded = false;
   bool crashed = true;
   final VoidCallback stateSetter;
@@ -232,6 +232,13 @@ class StorageManager {
       "$projectPath/originalImage",
     ).create();
     await originalImageFile.writeAsBytes(project.originalBytes);
+  }
+
+  Future<void> deleteProjectFromStorage(String id) async {
+    final Directory projectDir = Directory("${storageDir.path}/$id");
+    if (await projectDir.exists()) {
+      projectDir.delete(recursive: true);
+    }
   }
 
   //runs

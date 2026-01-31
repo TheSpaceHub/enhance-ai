@@ -7,6 +7,7 @@ class LeftPanel extends StatelessWidget {
   final String? selectedId;
   final Function(SRProject) onSelect;
   final VoidCallback onNewProject;
+  final Function(SRProject) onDeleteProject;
   final VoidCallback onClose;
 
   const LeftPanel({
@@ -15,6 +16,7 @@ class LeftPanel extends StatelessWidget {
     required this.selectedId,
     required this.onSelect,
     required this.onNewProject,
+    required this.onDeleteProject,
     required this.onClose,
   });
 
@@ -106,6 +108,10 @@ class LeftPanel extends StatelessWidget {
                         color: Colors.white30,
                         fontSize: 11,
                       ),
+                    ),
+                    trailing: IconButton(
+                      icon: Icon(Icons.delete),
+                      onPressed: () => onDeleteProject(project),
                     ),
                   ),
                 );

@@ -55,6 +55,7 @@ class _HomePageState extends State<HomePage> {
                         selectedId: _controller.selectedProjectId,
                         onSelect: (p) => _controller.selectProject(p.id),
                         onNewProject: _controller.createNewProject,
+                        onDeleteProject: (p) => _controller.deleteProject(p.id),
                         onClose: () => setState(() => _showLeftNav = false),
                       )
                     : const SizedBox.shrink(),

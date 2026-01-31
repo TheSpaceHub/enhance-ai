@@ -120,6 +120,17 @@ class Controller extends ChangeNotifier {
     }
   }
 
+  Future<void> deleteProject(String id) async {
+    //delete from state and storage
+
+    //state
+    final index = _projects.indexWhere((p) => p.id == id);
+    _projects.removeAt(index);
+    //storage
+    storageManager.deleteProjectFromStorage(id);
+    notifyListeners();
+  }
+
   /// Runs an image upscaling task with optimistic UI updates and error rollback.
   Future<void> runUpscale(String model, double factor) async {
     if (currentProject == null) return;

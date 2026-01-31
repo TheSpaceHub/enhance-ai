@@ -6,8 +6,8 @@ import 'dart:async';
 
 /// Service responsible for communicating with the backend AI upscaling API
 class ApiService {
-  static const String baseUrl = 'http://127.0.0.1:8000/upscale';
-  //static const String baseUrl = 'https://danvancea-EnhanceAI.hf.space/upscale';
+  //static const String baseUrl = 'http://127.0.0.1:8000/upscale';
+  static const String baseUrl = 'https://EnhanceAI-BCN-EnhanceAI.hf.space/upscale';
 
   static Future<SRRun> upscaleImage({
     required Uint8List imageBytes,
