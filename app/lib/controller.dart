@@ -1,3 +1,4 @@
+import 'package:app/storage_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'ui/models/sr_experiment.dart';
@@ -6,6 +7,7 @@ import 'services/api_service.dart';
 /// State manager that coordinates projects, runs, and UI interactions
 class Controller extends ChangeNotifier {
   final List<SRProject> _projects = [];
+  late final StorageManager storageManager = StorageManager(_projects);
   String? _selectedProjectId;
   String? _activeRunId; // Active Run (Right Slot)
   String? _pinnedRunId; // Pinned Run (Left Slot)
@@ -89,9 +91,11 @@ class Controller extends ChangeNotifier {
     );
 
     if (result != null && result.files.single.bytes != null) {
+      //set bytess and name
       final bytes = result.files.single.bytes!;
       final name = result.files.single.name;
 
+      //create SRProject object and insert
       final newProject = SRProject(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         name: name,
@@ -100,6 +104,11 @@ class Controller extends ChangeNotifier {
       );
 
       _projects.insert(0, newProject);
+
+      //store image file
+      await storageManager.addProject(newProject);
+
+      //select project
       selectProject(newProject.id);
     }
   }
