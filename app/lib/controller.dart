@@ -139,17 +139,14 @@ class Controller extends ChangeNotifier {
     _activeRunId = tempRunId;
     _errorMessage = null;
     notifyListeners();
-    print("Shown as processing");
 
     try {
-      print("Entered try");
       final finishedRun = await ApiService.upscaleImage(
         imageBytes: currentProject!.originalBytes,
         modelName: model,
         factor: factor,
         device: _selectedDevice,
       );
-      print("After api call");
 
       // Replace temporary run with final result
       final pIndex = _projects.indexWhere((p) => p.id == _selectedProjectId);
@@ -161,12 +158,9 @@ class Controller extends ChangeNotifier {
 
         _activeRunId = finishedRun.id;
         notifyListeners();
-        print("end of try");
       }
     } catch (e) {
       // Rollback in case of error
-      print("oops error");
-      print(e);
       _errorMessage = e.toString().replaceAll("Exception: ", "");
       final pIndex = _projects.indexWhere((p) => p.id == _selectedProjectId);
       if (pIndex != -1) {
