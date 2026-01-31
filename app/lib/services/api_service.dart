@@ -6,8 +6,8 @@ import 'dart:async';
 
 /// Service responsible for communicating with the backend AI upscaling API
 class ApiService {
-  //static const String baseUrl = 'http://127.0.0.1:8000/upscale';
-  static const String baseUrl = 'https://danvancea-EnhanceAI.hf.space/upscale';
+  static const String baseUrl = 'http://127.0.0.1:8000/upscale';
+  //static const String baseUrl = 'https://danvancea-EnhanceAI.hf.space/upscale';
 
   static Future<SRRun> upscaleImage({
     required Uint8List imageBytes,
@@ -64,6 +64,7 @@ class ApiService {
     final device = params['device'] as String;
 
     final data = jsonDecode(body);
+    final metrics = data['metrics'] as Map<String, dynamic>;
 
     if (data['status'] == 'success') {
       final String base64Image = data['image'];
@@ -77,7 +78,7 @@ class ApiService {
         upscaleFactor: factor,
         isProcessing: false,
         resultBytes: resultBytes,
-        metrics: data['metrics'] ?? {},
+        metrics: metrics,
         device: device,
         inferenceTime: time,
       );

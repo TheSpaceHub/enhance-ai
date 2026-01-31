@@ -17,9 +17,21 @@ class SRProject {
     this.runs = const [],
   });
 
-  /// Adds new run to project
   void addRun(SRRun run) {
+    // Adds new run to project
     runs = [run, ...runs];
+  }
+
+  void updateRun(String runId, SRRun newRun) {
+    //Updates run given its id
+    for (var i = 0; i < runs.length; i++) {
+      if (runs[i].id == runId) {
+        runs[i] = newRun;
+        return;
+      }
+    }
+    //if there was no return, warn
+    throw Exception("The run to update was not found");
   }
 }
 
@@ -50,7 +62,7 @@ class SRRun {
   SRRun copyWith({
     bool? isProcessing,
     Uint8List? resultBytes,
-    Map<String, dynamic>? metrics,
+    Map<String, String>? metrics,
     String? inferenceTime,
   }) {
     return SRRun(

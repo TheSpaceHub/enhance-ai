@@ -6,8 +6,8 @@ import 'services/api_service.dart';
 
 /// State manager that coordinates projects, runs, and UI interactions
 class Controller extends ChangeNotifier {
-  final List<SRProject> _projects = [];
-  late final StorageManager storageManager = StorageManager(_projects);
+  final List<SRProject> _projects;
+  final StorageManager storageManager;
   String? _selectedProjectId;
   String? _activeRunId; // Active Run (Right Slot)
   String? _pinnedRunId; // Pinned Run (Left Slot)
@@ -18,6 +18,13 @@ class Controller extends ChangeNotifier {
   String get selectedDevice => _selectedDevice;
   String? get activeRunId => _activeRunId;
   String? get pinnedRunId => _pinnedRunId;
+
+  //initialize storage manager right after creating the projects in memory
+  Controller({required VoidCallback stateSetter})
+    : this._internal(stateSetter, []);
+  Controller._internal(VoidCallback stateSetter, List<SRProject> list)
+    : _projects = list,
+      storageManager = StorageManager(list, stateSetter);
 
   SRProject? get currentProject {
     if (_selectedProjectId == null) return null;
@@ -106,7 +113,7 @@ class Controller extends ChangeNotifier {
       _projects.insert(0, newProject);
 
       //store image file
-      await storageManager.addProject(newProject);
+      await storageManager.addProjectToStorage(newProject);
 
       //select project
       selectProject(newProject.id);
@@ -147,18 +154,10 @@ class Controller extends ChangeNotifier {
       // Replace temporary run with final result
       final pIndex = _projects.indexWhere((p) => p.id == _selectedProjectId);
       if (pIndex != -1) {
-        final proj = _projects[pIndex];
-        final updatedRuns = proj.runs
-            .map((r) => r.id == tempRunId ? finishedRun : r)
-            .toList();
+        _projects[pIndex].updateRun(tempRunId, finishedRun);
 
-        _projects[pIndex] = SRProject(
-          id: proj.id,
-          name: proj.name,
-          timestamp: proj.timestamp,
-          originalBytes: proj.originalBytes,
-          runs: updatedRuns,
-        );
+        //store it
+        storageManager.addRunToStorage(finishedRun, _projects[pIndex]);
 
         _activeRunId = finishedRun.id;
         notifyListeners();
@@ -167,6 +166,7 @@ class Controller extends ChangeNotifier {
     } catch (e) {
       // Rollback in case of error
       print("oops error");
+      print(e);
       _errorMessage = e.toString().replaceAll("Exception: ", "");
       final pIndex = _projects.indexWhere((p) => p.id == _selectedProjectId);
       if (pIndex != -1) {

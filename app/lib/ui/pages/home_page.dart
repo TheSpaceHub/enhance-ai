@@ -13,7 +13,9 @@ class HomePage extends StatefulWidget {
 
 /// Manages responsive layout and connects UI panels to the Controller
 class _HomePageState extends State<HomePage> {
-  final Controller _controller = Controller();
+  late final Controller _controller = Controller(
+    stateSetter: () => setState(() {}),
+  );
   bool _showLeftNav = true;
   bool _showRightPanel = true;
 
@@ -28,19 +30,18 @@ class _HomePageState extends State<HomePage> {
     return ListenableBuilder(
       listenable: _controller,
       builder: (context, child) {
-
-      if (_controller.errorMessage != null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(_controller.errorMessage!),
-              backgroundColor: Colors.red,
-              duration: Duration(seconds: 20),
-            ),
-          );
-          _controller.clearError();
-        });
-      }
+        if (_controller.errorMessage != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(_controller.errorMessage!),
+                backgroundColor: Colors.red,
+                duration: Duration(seconds: 20),
+              ),
+            );
+            _controller.clearError();
+          });
+        }
         return Scaffold(
           body: Row(
             children: [
