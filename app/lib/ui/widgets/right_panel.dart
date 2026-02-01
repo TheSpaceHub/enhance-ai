@@ -158,17 +158,9 @@ class _RightPanelState extends State<RightPanel> {
             child: ListView(
               padding: const EdgeInsets.all(20),
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildHeader("CONFIGURATION"),
-                    IconButton(
-                      icon: const Icon(Icons.close, size: 18),
-                      color: Colors.white54,
-                      tooltip: "Hide panel",
-                      onPressed: widget.onClose,
-                    ),
-                  ],
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _buildHeader("CONFIGURATION", 16),
                 ),
                 // Model selection
                 Row(
@@ -326,7 +318,7 @@ class _RightPanelState extends State<RightPanel> {
 
                 // Show metrics
                 if (widget.activeRun != null && !isProcessing) ...[
-                  _buildHeader("CURRENT RUN METRICS"),
+                  _buildHeader("CURRENT RUN METRICS", 11),
                   const SizedBox(height: 16),
 
                   _buildMetricRow(
@@ -377,7 +369,7 @@ class _RightPanelState extends State<RightPanel> {
               children: [
                 Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: _buildHeader("RUN HISTORY"),
+                  child: _buildHeader("RUN HISTORY", 12),
                 ),
                 Expanded(
                   child: ListView.builder(
@@ -454,12 +446,12 @@ class _RightPanelState extends State<RightPanel> {
   }
 
   /// Builds a section header label used to separate panel sections
-  Widget _buildHeader(String text) {
+  Widget _buildHeader(String text, double fontSize) {
     return Text(
       text,
-      style: const TextStyle(
+      style: TextStyle(
         color: Colors.white54,
-        fontSize: 11,
+        fontSize: fontSize,
         fontWeight: FontWeight.bold,
         letterSpacing: 1.0,
       ),

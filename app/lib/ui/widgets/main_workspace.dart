@@ -10,6 +10,8 @@ class MainWorkspace extends StatefulWidget {
   final SRRun? activeRun; // Active Run (Right Slot)
   final SRRun? pinnedRun; // Pinned Run (Left Slot)
   final VoidCallback onUpload;
+  final Widget leftButton;
+  final Widget rightButton;
 
   const MainWorkspace({
     super.key,
@@ -17,6 +19,8 @@ class MainWorkspace extends StatefulWidget {
     required this.activeRun,
     required this.pinnedRun,
     required this.onUpload,
+    required this.leftButton,
+    required this.rightButton,
   });
 
   @override
@@ -50,13 +54,13 @@ class _MainWorkspaceState extends State<MainWorkspace> {
     final Uint8List bytesA =
         widget.activeRun?.resultBytes ?? widget.originalImageBytes!;
     final String labelB = widget.activeRun != null
-        ? "Reference: ${widget.activeRun!.modelName}"
+        ? "Reference: ${widget.activeRun!.modelName} (x${widget.activeRun!.upscaleFactor.toInt()})"
         : "Original Input";
 
     final Uint8List bytesB =
         widget.pinnedRun?.resultBytes ?? widget.originalImageBytes!;
     final String labelA = widget.pinnedRun != null
-        ? "Active: ${widget.pinnedRun!.modelName}"
+        ? "Active: ${widget.pinnedRun!.modelName} (x${widget.pinnedRun!.upscaleFactor.toInt()})"
         : "Original Input";
 
     return Column(
@@ -106,9 +110,15 @@ class _MainWorkspaceState extends State<MainWorkspace> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _buildCompactBadge(labelA, isPinned: widget.pinnedRun != null),
+          widget.leftButton,
 
-          _buildCompactBadge(labelB, isActive: true),
+          const SizedBox(width: 12),
+          _buildCompactBadge(labelA, isPinned: widget.pinnedRun != null),
+          const Spacer(),
+          _buildCompactBadge(labelB, isActive: widget.activeRun != null),
+          const SizedBox(width: 12),
+
+          widget.rightButton,
         ],
       ),
     );
@@ -216,9 +226,9 @@ class _MainWorkspaceState extends State<MainWorkspace> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withAlpha(32),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withOpacity(0.5)),
+        border: Border.all(color: color.withAlpha(128)),
       ),
       child: Row(
         children: [

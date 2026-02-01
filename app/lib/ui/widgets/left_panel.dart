@@ -30,24 +30,13 @@ class LeftPanel extends StatelessWidget {
           // Header Logo
           Padding(
             padding: EdgeInsets.fromLTRB(20, 30, 20, 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Enhance AI",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close, size: 18),
-                  color: Colors.white54,
-                  tooltip: "Hide panel",
-                  onPressed: onClose,
-                ),
-              ],
+            child: Text(
+              "Enhance AI",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
 
