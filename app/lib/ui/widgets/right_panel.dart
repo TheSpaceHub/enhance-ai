@@ -38,73 +38,145 @@ class RightPanel extends StatefulWidget {
 
 /// Manages local UI state for model selection, scaling, and downloads
 class _RightPanelState extends State<RightPanel> {
+  bool _modelInfoExpanded = false;
   double upscaleFactor = 4;
   String selectedModel = 'Average';
   final List<String> models = ['Average', 'CNNU', 'ESPCN', 'SRResNet', 'SRGAN'];
 
-  /// TODO:
-  void _showModelInfo(String modelKey) {
+  /// Shows detailed information about the selected model
+  Widget _showModelInfo(String modelKey) {
     final info = modelRegistry[modelKey];
-    if (info == null) return;
+    if (info == null) return SizedBox.shrink();
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF2D2D30),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            const Icon(Icons.auto_awesome, color: Colors.blueAccent),
-            const SizedBox(width: 12),
-            Text(info.name, style: const TextStyle(color: Colors.white)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              info.description,
-              style: const TextStyle(color: Colors.white70),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              "STRENGTHS",
-              style: TextStyle(
-                color: Colors.white30,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: info.strengths
-                  .map(
-                    (s) => Chip(
-                      label: Text(s, style: const TextStyle(fontSize: 11)),
-                      backgroundColor: Colors.blueAccent.withValues(alpha: 0.1),
-                      side: const BorderSide(
-                        color: Colors.blueAccent,
-                        width: 0.5,
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
-            const SizedBox(height: 16),
-            _buildInfoRow("Computational Complexity:", info.complexity),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              "CLOSE",
-              style: TextStyle(color: Colors.blueAccent),
+    return Container(
+      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(top: 12, bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.black26,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white12),
+      ),
+
+      // Description
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            info.name,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.blueAccent,
             ),
           ),
+          const SizedBox(height: 8),
+          Text(
+            info.description,
+            style: const TextStyle(color: Colors.white70, fontSize: 12),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            "IDEAL FOR:",
+            style: TextStyle(
+              color: Colors.white30,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(
+            info.recommendedFor,
+            style: const TextStyle(color: Colors.tealAccent, fontSize: 11),
+          ),
+          const SizedBox(height: 12),
+
+          // Strenghts
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: info.strengths
+                .map(
+                  (s) => Chip(
+                    label: Text(
+                      s,
+                      style: const TextStyle(fontSize: 10, color: Colors.white),
+                    ),
+                    backgroundColor: Colors.blueAccent.withValues(alpha: 0.1),
+                    padding: EdgeInsets.zero,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    side: const BorderSide(
+                      color: Colors.blueAccent,
+                      width: 0.5,
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+          const SizedBox(height: 16),
+
+          // Speed bar
+          Row(
+            children: [
+              const Text(
+                "SPEED  ",
+                style: TextStyle(
+                  color: Colors.white30,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(2),
+                  child: LinearProgressIndicator(
+                    value: info.speedScore,
+                    minHeight: 4,
+                    backgroundColor: Colors.white10,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      info.speedScore > 0.7
+                          ? Colors.greenAccent
+                          : info.speedScore > 0.3
+                          ? Colors.orangeAccent
+                          : Colors.redAccent,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
+      ),
+    );
+  }
+
+  /// Toggles and displays the "About Model" section
+  Widget aboutModel(String modelKey) {
+    final info = modelRegistry[modelKey];
+    final label = info != null ? 'About ${info.name}' : 'Model Details';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: InkWell(
+        onTap: () => setState(() => _modelInfoExpanded = !_modelInfoExpanded),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              _modelInfoExpanded
+                  ? Icons.keyboard_arrow_up
+                  : Icons.keyboard_arrow_down,
+              size: 18,
+              color: Colors.blueAccent,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.blueAccent,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -120,27 +192,6 @@ class _RightPanelState extends State<RightPanel> {
     } catch (e) {
       debugPrint("Error al descargar: $e");
     }
-  }
-
-  /// Displays a label-value row used inside info dialogs
-  Widget _buildInfoRow(String label, String value) {
-    return Row(
-      children: [
-        Text(
-          label,
-          style: const TextStyle(color: Colors.white38, fontSize: 12),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.orangeAccent,
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
   }
 
   @override
@@ -177,46 +228,54 @@ class _RightPanelState extends State<RightPanel> {
                     ],
                   ),
                 ),
+
                 // Model selection
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildLabel("Model Architecture"),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.info_outline,
-                        size: 18,
-                        color: Colors.white30,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [_buildLabel("Model Architecture")],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.black26,
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: Colors.white12),
                       ),
-                      onPressed: () => _showModelInfo(selectedModel),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: selectedModel,
+                          dropdownColor: const Color(0xFF333333),
+                          isExpanded: true,
+                          style: const TextStyle(color: Colors.white),
+                          items: models
+                              .map(
+                                (m) =>
+                                    DropdownMenuItem(value: m, child: Text(m)),
+                              )
+                              .toList(),
+                          onChanged: isProcessing
+                              ? null
+                              : (v) => setState(() => selectedModel = v!),
+                        ),
+                      ),
+                    ),
+
+                    aboutModel(selectedModel),
+
+                    ClipRect(
+                      child: AnimatedSize(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOutCubic,
+                        alignment: Alignment.topCenter,
+                        child: _modelInfoExpanded
+                            ? _showModelInfo(selectedModel)
+                            : const SizedBox(width: double.infinity),
+                      ),
                     ),
                   ],
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.black26,
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: Colors.white12),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: selectedModel,
-                      dropdownColor: const Color(0xFF333333),
-                      isExpanded: true,
-                      style: const TextStyle(color: Colors.white),
-                      items: models
-                          .map(
-                            (m) => DropdownMenuItem(value: m, child: Text(m)),
-                          )
-                          .toList(),
-                      onChanged: isProcessing
-                          ? null
-                          : (v) => setState(() => selectedModel = v!),
-                    ),
-                  ),
                 ),
 
                 const SizedBox(height: 20),
