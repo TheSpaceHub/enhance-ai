@@ -160,7 +160,22 @@ class _RightPanelState extends State<RightPanel> {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
-                  child: _buildHeader("CONFIGURATION", 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildHeader("CONFIGURATION", 16),
+
+                      // Botón cerrar solo si hay proyecto
+                      if (widget.hasProject)
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.white30),
+                          tooltip: "Close Panel",
+                          onPressed: widget.onClose,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                    ],
+                  ),
                 ),
                 // Model selection
                 Row(

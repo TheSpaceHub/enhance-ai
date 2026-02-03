@@ -8,11 +8,15 @@ import 'services/api_service.dart';
 class Controller extends ChangeNotifier {
   final List<SRProject> _projects;
   final StorageManager storageManager;
+  bool _showRightPanel = true;
+  bool _showLeftPanel = true;
   String? _selectedProjectId;
   String? _activeRunId; // Active Run (Right Slot)
   String? _pinnedRunId; // Pinned Run (Left Slot)
   String _selectedDevice = 'GPU'; // 'CPU' or 'GPU'
   String? _errorMessage;
+  bool get showRightPanel => _showRightPanel;
+  bool get showLeftPanel => _showLeftPanel;
   List<SRProject> get projects => _projects;
   String? get selectedProjectId => _selectedProjectId;
   String get selectedDevice => _selectedDevice;
@@ -87,6 +91,30 @@ class Controller extends ChangeNotifier {
   /// Selects a run as the active result
   void selectRun(String runId) {
     _activeRunId = runId;
+    notifyListeners();
+  }
+
+  /// Changes the "show right panel" state
+  void toggleRightPanel() {
+    _showRightPanel = !_showRightPanel;
+    notifyListeners();
+  }
+
+  void closeRightPanel() {
+    if (!_showRightPanel) return;
+    _showRightPanel = false;
+    notifyListeners();
+  }
+
+  /// Changes the "show left panel" state
+  void toggleLeftPanel() {
+    _showLeftPanel = !_showLeftPanel;
+    notifyListeners();
+  }
+
+  void closeLeftPanel() {
+    if (!_showLeftPanel) return;
+    _showLeftPanel = false;
     notifyListeners();
   }
 

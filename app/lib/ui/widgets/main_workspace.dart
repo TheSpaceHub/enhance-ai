@@ -10,8 +10,10 @@ class MainWorkspace extends StatefulWidget {
   final SRRun? activeRun; // Active Run (Right Slot)
   final SRRun? pinnedRun; // Pinned Run (Left Slot)
   final VoidCallback onUpload;
-  final Widget leftButton;
-  final Widget rightButton;
+  final bool showLeftPanel;
+  final VoidCallback onCloseLeftPanel;
+  final bool showRightPanel;
+  final VoidCallback onCloseRightPanel;
 
   const MainWorkspace({
     super.key,
@@ -19,8 +21,10 @@ class MainWorkspace extends StatefulWidget {
     required this.activeRun,
     required this.pinnedRun,
     required this.onUpload,
-    required this.leftButton,
-    required this.rightButton,
+    required this.showLeftPanel,
+    required this.onCloseLeftPanel,
+    required this.showRightPanel,
+    required this.onCloseRightPanel,
   });
 
   @override
@@ -110,7 +114,13 @@ class _MainWorkspaceState extends State<MainWorkspace> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          widget.leftButton,
+          !widget.showLeftPanel
+              ? IconButton(
+                  icon: const Icon(Icons.menu_open),
+                  tooltip: "Open History",
+                  onPressed: widget.onCloseLeftPanel,
+                )
+              : SizedBox.shrink(),
 
           const SizedBox(width: 12),
           _buildCompactBadge(labelA, isPinned: widget.pinnedRun != null),
@@ -118,7 +128,12 @@ class _MainWorkspaceState extends State<MainWorkspace> {
           _buildCompactBadge(labelB, isActive: widget.activeRun != null),
           const SizedBox(width: 12),
 
-          widget.rightButton,
+          if (!widget.showRightPanel)
+            IconButton(
+              icon: const Icon(Icons.settings),
+              tooltip: "Open Enhance Config",
+              onPressed: widget.onCloseRightPanel,
+            ),
         ],
       ),
     );

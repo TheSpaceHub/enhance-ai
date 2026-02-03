@@ -9,6 +9,7 @@ class LeftPanel extends StatelessWidget {
   final VoidCallback onNewProject;
   final Function(SRProject) onDeleteProject;
   final VoidCallback onClose;
+  final bool hasProject;
 
   const LeftPanel({
     super.key,
@@ -18,6 +19,7 @@ class LeftPanel extends StatelessWidget {
     required this.onNewProject,
     required this.onDeleteProject,
     required this.onClose,
+    required this.hasProject,
   });
 
   @override
@@ -30,13 +32,26 @@ class LeftPanel extends StatelessWidget {
           // Header Logo
           Padding(
             padding: EdgeInsets.fromLTRB(20, 30, 20, 20),
-            child: Text(
-              "Enhance AI",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Enhance AI",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                hasProject
+                    ? IconButton(
+                        icon: const Icon(Icons.close),
+                        color: Colors.white54,
+                        tooltip: "Close panel",
+                        onPressed: onClose,
+                      )
+                    : SizedBox.shrink(),
+              ],
             ),
           ),
 
