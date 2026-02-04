@@ -1,6 +1,7 @@
 import keras
 import tensorflow as tf
 import architectures as archs
+from architectures import *
 from image_processing import load_image_paths, load_and_preprocess
 import keras.applications.vgg19 as vgglib
 import matplotlib.pyplot as plt
@@ -11,6 +12,35 @@ import time
 import math
 import csv
 from pathlib import Path
+
+@keras.saving.register_keras_serializable()
+def psnr(y_true, y_pred):
+    """
+    Returns Peak Signal-to-Noise Ratio.
+
+    Args:
+        y_true: True image.
+        y_pred: Prediction.
+
+    Returns:
+        float: PSNR.
+    """
+    return tf.image.psnr(y_true, y_pred, max_val=1.0)
+
+@keras.saving.register_keras_serializable()
+def ssim(y_true, y_pred):
+    """
+    Returns Structural Similarity Index Measure.
+
+    Args:
+        y_true: True image.
+        y_pred: Prediction.
+
+    Returns:
+        float: SSIM.
+    """
+
+    return tf.image.ssim(y_true, y_pred, max_val=1.0)
 
 def load_vgg(path: str) -> keras.Model:
     """Loads VGG19 model from local memory if it exists; otherwise downloads it from the Internet.
@@ -42,7 +72,8 @@ def get_mae_loss(y_true, y_pred) -> float:
     Returns:
         float: MAE.
     """
-    return float(tf.reduce_mean(tf.abs(y_true - y_pred)))
+    y_true_resized = tf.image.resize(y_true, tf.shape(y_pred)[1:3])
+    return float(tf.reduce_mean(tf.abs(y_true_resized - y_pred)))
 
 
 @tf.function(reduce_retracing=True)
@@ -57,8 +88,10 @@ def get_perceptual_loss(y_true, y_pred, vgg_features) -> float:
     Returns:
         float: Perceptual loss.
     """
+    y_true_resized = tf.image.resize(y_true, tf.shape(y_pred)[1:3])
+
     # Scale to 255
-    y_true_scaled = y_true * 255.0
+    y_true_scaled = y_true_resized * 255.0
     y_pred_scaled = y_pred * 255.0
 
     # Preprocess for vgg
@@ -216,16 +249,17 @@ def save_metrics_csv(
             
 def main():
     # Define constants
-    BATCH_SIZE = 64
+    BATCH_SIZE = 1
     IMAGES_PATH = "data/DIV2K_train_HR/"
     MODEL_FOLDER_PATH = "models/"
     MODEL_NAMES = [
-        "cnnu_e30_sc4.keras",
-        "espcn_e30_sc4.keras",
-        "srrn_e30_sc4_rb8f64.keras",
-        "srgan_e30_sc4_rb8f64_l005.keras",
+        "average_x4.keras",
+        "cnnu_e100_x4.keras",
+        "espcn_e100_x2.keras",
+        "srrn_e100_b8f64_x4.keras",
+        "srgan_e100_b8f64_l005_x4.keras",
         ]
-    MAX_DATASET_SIZE = 1
+    MAX_DATASET_SIZE = 20
 
     # Set matplotlib font to be small
     plt.rcParams.update({"font.size": 8})
@@ -241,7 +275,7 @@ def main():
     model_labels = []
     for name in MODEL_NAMES:
         try:
-            model = keras.models.load_model(os.path.join(MODEL_FOLDER_PATH, name))
+            model = keras.models.load_model(os.path.join(MODEL_FOLDER_PATH, name), custom_objects={'psnr': psnr,'ssim': ssim})
             models.append(model)
             model_labels.append(model.name)
             
