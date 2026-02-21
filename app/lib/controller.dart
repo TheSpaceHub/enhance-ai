@@ -2,7 +2,7 @@ import 'package:app/storage_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'ui/models/sr_experiment.dart';
-import 'services/api_service.dart';
+import 'services/upscale_engine.dart';
 
 /// State manager that coordinates projects, runs, and UI interactions
 class Controller extends ChangeNotifier {
@@ -183,7 +183,7 @@ class Controller extends ChangeNotifier {
       final finishedRun = await ApiService.upscaleImage(
         imageBytes: currentProject!.originalBytes,
         modelName: model,
-        factor: factor,
+        factor: factor.toInt(),
         device: _selectedDevice,
       );
 

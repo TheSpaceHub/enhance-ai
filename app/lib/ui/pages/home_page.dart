@@ -46,6 +46,7 @@ class _HomePageState extends State<HomePage> {
       builder: (context, child) {
         bool hasProject = _controller.currentProject != null;
         if (_controller.errorMessage != null) {
+          debugPrint(_controller.errorMessage);
           WidgetsBinding.instance.addPostFrameCallback((_) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
