@@ -108,8 +108,7 @@ class ApiService {
 
       int outIdx = 0;
       for (int y = 0; y < outH; y++) {
-        for (int x = 0; x < outW; x++) {
-          if (outIdx + 2 >= outputData.length) break;
+        for (int x = 0; x < outW && outIdx + 2 < outputData.length; x++) {
           outImage.setPixelRgb(
             x,
             y,
@@ -120,7 +119,7 @@ class ApiService {
         }
       }
 
-      final resultBytes = Uint8List.fromList(img.encodePng(outImage));
+      final resultBytes = img.encodePng(outImage);
       watch.stop();
 
       // Release resources
@@ -150,13 +149,19 @@ class ApiService {
 
   /// Recursively flattens nested tensors into a 1D list of doubles
   static List<double> _flattenTensor(dynamic tensor) {
-    if (tensor is List) {
-      return tensor.expand((e) => _flattenTensor(e)).toList();
-    } else if (tensor is double) {
-      return [tensor];
-    } else if (tensor is num) {
-      return [tensor.toDouble()];
+    List<double> flatList = [];
+
+    void flatten(dynamic item) {
+      if (item is List) {
+        for (var element in item) {
+          flatten(element);
+        }
+      } else if (item is num) {
+        flatList.add(item.toDouble());
+      }
     }
-    return [];
+
+    flatten(tensor);
+    return flatList;
   }
 }

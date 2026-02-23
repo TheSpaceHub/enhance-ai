@@ -112,6 +112,8 @@ def convert_all_models_to_onnx():
             print(f"🔄 Converting {name} x{scale} to ONNX...")
             try:
                 # Load the appropriate model class
+                if name != "Average" or scale != 4:
+                    continue
                 if name == "Average":
                     model = load_model(path, Average, scale, PARAMETERS[name][scale])
                 elif name == "CNNU":

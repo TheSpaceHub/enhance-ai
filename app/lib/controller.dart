@@ -8,12 +8,12 @@ import 'services/upscale_engine.dart';
 class Controller extends ChangeNotifier {
   final List<SRProject> _projects;
   final StorageManager storageManager;
-  bool _showRightPanel = true;
-  bool _showLeftPanel = true;
+  bool _showRightPanel = false;
+  bool _showLeftPanel = false;
   String? _selectedProjectId;
   String? _activeRunId; // Active Run (Right Slot)
   String? _pinnedRunId; // Pinned Run (Left Slot)
-  String _selectedDevice = 'GPU'; // 'CPU' or 'GPU'
+  String _selectedDevice = 'CPU'; // 'CPU' or 'GPU'
   String? _errorMessage;
   bool get showRightPanel => _showRightPanel;
   bool get showLeftPanel => _showLeftPanel;

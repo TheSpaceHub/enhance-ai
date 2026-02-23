@@ -1,6 +1,6 @@
 import tensorflow as tf
 import matplotlib.pyplot as plt
-from architectures import SRRN
+from architectures import Average
 from image_processing import load_and_preprocess, load_image_paths
 from keras.callbacks import TensorBoard
 import keras
@@ -132,17 +132,17 @@ def set_up_logging(model_name: str = "srmodel") -> TensorBoard:
 
 def main():
     # Constants
-    UP_RATIO = 2
+    UP_RATIO = 4
     BATCH_SIZE = 16
     FILTERS = 16
     NUM_BLOCKS = 4
     EPOCHS = 1
     HR_SIZE = (256, 256)
     DATA_FOLDER = "data/DIV2K_train_HR/DIV2K_train_HR/"
-    MODEL_NAME = "SRRN"
+    MODEL_NAME = "avg4"
 
     # Create, build and compile model
-    model = SRRN(up_ratio=UP_RATIO, filters=FILTERS, num_blocks=NUM_BLOCKS)
+    model = Average(up_ratio=UP_RATIO)
     model.build((None, HR_SIZE[0], HR_SIZE[1], 3))
     model.compile(optimizer="adam", loss="mae", jit_compile=False)
 

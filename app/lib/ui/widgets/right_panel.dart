@@ -202,7 +202,7 @@ class _RightPanelState extends State<RightPanel> {
 
     return Container(
       width: 320,
-      color: const Color(0xFF252526),
+      color: const Color.fromARGB(255, 37, 37, 37),
       child: Column(
         children: [
           Expanded(
