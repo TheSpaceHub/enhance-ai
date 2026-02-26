@@ -66,6 +66,7 @@ class _HomePageState extends State<HomePage> {
               Positioned.fill(
                 child: MainWorkspace(
                   originalImageBytes: _controller.currentProject?.originalBytes,
+                  haveProject: _controller.currentProject != null,
                   activeRun: _controller.activeRun,
                   pinnedRun: _controller.pinnedRun,
                   onUpload: _controller.createNewProject,

@@ -15,6 +15,7 @@ class Controller extends ChangeNotifier {
   String? _pinnedRunId; // Pinned Run (Left Slot)
   String _selectedDevice = 'CPU'; // 'CPU' or 'GPU'
   String? _errorMessage;
+  VoidCallback _stateSetter;
   bool get showRightPanel => _showRightPanel;
   bool get showLeftPanel => _showLeftPanel;
   List<SRProject> get projects => _projects;
@@ -28,6 +29,7 @@ class Controller extends ChangeNotifier {
     : this._internal(stateSetter, []);
   Controller._internal(VoidCallback stateSetter, List<SRProject> list)
     : _projects = list,
+      _stateSetter = stateSetter,
       storageManager = StorageManager(list, stateSetter);
 
   SRProject? get currentProject {
@@ -185,6 +187,10 @@ class Controller extends ChangeNotifier {
         modelName: model,
         factor: factor.toInt(),
         device: _selectedDevice,
+        /*onProgress: (p) {
+          if (activeRun != null) activeRun!.progress = p;
+          _stateSetter();
+        },*/
       );
 
       // Replace temporary run with final result

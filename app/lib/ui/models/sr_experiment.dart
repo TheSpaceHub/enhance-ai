@@ -43,6 +43,7 @@ class SRRun {
   final bool isProcessing;
   final Uint8List? resultBytes;
   final Map<String, dynamic> metrics;
+  double progress = 0;
 
   // Nuevos campos técnicos
   final String device; // 'CPU' o 'GPU'

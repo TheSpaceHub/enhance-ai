@@ -65,3 +65,5 @@ urllib3==2.6.3
 uvicorn==0.40.0
 Werkzeug==3.1.5
 wrapt==2.0.1
+tensorflow_model_optimization
+tf_keras

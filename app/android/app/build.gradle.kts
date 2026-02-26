@@ -19,6 +19,10 @@ android {
         jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
+    androidResources {
+        noCompress += "tflite"
+    }
+
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.app"
@@ -41,4 +45,11 @@ android {
 
 flutter {
     source = "../.."
+}
+dependencies {
+    // ... your other dependencies ...
+
+    // Explicitly provide the modern LiteRT engine to the native Kotlin code
+    implementation("com.google.ai.edge.litert:litert:1.4.1")
+    implementation("com.google.ai.edge.litert:litert-api:1.4.1")
 }
