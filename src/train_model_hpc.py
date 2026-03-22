@@ -1,11 +1,7 @@
 import os
-
-os.environ["TF_USE_LEGACY_KERAS"] = "1"  # work with quantization
 import tensorflow as tf
-import quantizable_archs as qarchs
+import hpc_archs
 from image_processing import load_and_preprocess, load_image_paths
-import tensorflow_model_optimization as tfmot
-
 
 # Initialize the strategy
 strategy = tf.distribute.MirroredStrategy()
@@ -38,8 +34,11 @@ def build_dataset(
         # If this dataset is used for training, we shuffle the data to randomize split
         ds = ds.shuffle(buffer_size=len(image_paths))
 
+    def map_fn(p):
+        return load_and_preprocess(p, hr_size, up_ratio)
+
     ds = ds.map(
-        lambda p: load_and_preprocess(p, hr_size, up_ratio),
+        map_fn,
         num_parallel_calls=tf.data.AUTOTUNE,
     )
 
@@ -50,82 +49,88 @@ def build_dataset(
     return ds
 
 
-def train_model(name: str, modelf, ratio):
+def get_model(name: str):
+    if name == "CNNU_x2":
+        return hpc_archs.CNNUpscaler(2)
+    elif name == "CNNU_x4":
+        return hpc_archs.CNNUpscaler(4)
+    elif name == "ESPCN_x2":
+        return hpc_archs.ESPCN(2)
+    elif name == "ESPCN_x4":
+        return hpc_archs.ESPCN(4)
+    elif name == "SRRN_x2":
+        return hpc_archs.SRRN(up_ratio=2, num_blocks=8, filters=64)
+    elif name == "SRRN_x4":
+        return hpc_archs.SRRN(up_ratio=4, num_blocks=8, filters=64)
+    elif name == "SRGAN_x2":
+        return hpc_archs.SRGAN(2, filters=8, num_blocks=4)
+    elif name == "SRGAN_x4":
+        return hpc_archs.SRGAN(4, filters=64, num_blocks=16)
+    raise ValueError(f"Unknown model name: {name}")
+
+
+def train_model(name: str, ratio: int):
 
     EPOCHS = 100
     HR_SIZE = (256, 256)
     DATA_FOLDER = "data/DIV2K_train_HR/DIV2K_train_HR/"
-    TFLITE_PATH = f"models/tflite/{name}_strict_int8.tflite"
-    with strategy.scope():
-        model = modelf()
-        model.compile(optimizer="adam", loss="mae")
-
-        # Make it quantization aware
-        quantize_model = tfmot.quantization.keras.quantize_model
-        q_aware_model = quantize_model(model)
-
-        q_aware_model.compile(optimizer="adam", loss="mae")  # recompile
-
-    # Show summary
-    q_aware_model.summary()
-
+    MODEL_PATH = f"models/keras_models/{name}.keras"
     # Get dataset
     image_paths = load_image_paths(DATA_FOLDER)
     train_ds = build_dataset(
         image_paths, HR_SIZE, ratio, GLOBAL_BATCH_SIZE, training=True
     )
 
-    history = q_aware_model.fit(
+    with strategy.scope():
+        model = get_model(name)
+        
+        if "SRGAN" in name:
+            model.compile(
+                gen_optimizer=tf.keras.optimizers.Adam(),
+                disc_optimizer=tf.keras.optimizers.Adam()
+            )
+        else:
+            model.compile(optimizer="adam", loss="mae")
+
+        # Execute one forward pass to build the model properly
+        for lr, hr in train_ds.take(1):
+            model(lr)
+            if "SRGAN" in name:
+                model.discriminator(hr)
+
+    # Show summary
+    model.summary()
+
+    history = model.fit(
         train_ds,
         epochs=EPOCHS,
     )
 
     # Save
-    converter = tf.lite.TFLiteConverter.from_keras_model(q_aware_model)
-    converter.optimizations = [tf.lite.Optimize.DEFAULT]
-
-    converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
-
-    converter.inference_input_type = tf.int8
-    converter.inference_output_type = tf.int8
-
-    def representative_dataset():
-        for lr, hr in train_ds.unbatch().batch(1).take(100):
-            yield [tf.cast(lr, tf.float32)]
-
-    converter.representative_dataset = representative_dataset
-
-    tflite_quant_model = converter.convert()
-
-    os.makedirs(os.path.dirname(TFLITE_PATH), exist_ok=True)
-
-    with open(TFLITE_PATH, "wb") as f:
-        f.write(tflite_quant_model)
-
-    print(f"Quantized model saved successfully to: {TFLITE_PATH}")
+    os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
+    model.save(MODEL_PATH)
+    print(f"Model saved successfully to: {MODEL_PATH}")
 
 
 def main():
-    models = {
-        "CNNU_x2": lambda: qarchs.build_cnn_upscaler(2),
-        "CNNU_x4": lambda: qarchs.build_cnn_upscaler(4),
-        "ESPCN_x2": lambda: qarchs.build_espcn(2),
-        "ESPCN_x4": lambda: qarchs.build_espcn(4),
-        "SRRN_x2": lambda: qarchs.build_srrn(up_ratio=2, num_blocks=8, filters=64),
-        "SRRN_x4": lambda: qarchs.build_srrn(up_ratio=4, num_blocks=8, filters=64),
-        "SRGAN_x2": lambda: qarchs.QAT_SRGAN(2, filters=64, num_blocks=16),
-        "SRGAN_x4": lambda: qarchs.QAT_SRGAN(4, filters=64, num_blocks=16),
-    }
+    model_names = [
+        #"CNNU_x2",
+        #"CNNU_x4",
+        #"ESPCN_x2",
+        #"ESPCN_x4",
+        #"SRRN_x2",
+        #"SRRN_x4",
+        "SRGAN_x2",
+        #"SRGAN_x4",
+    ]
 
-    for name, model in models.items():
+    for name in model_names:
         up_ratio = int(name.split("_x")[1])
 
         print(f"\n--- Training {name} with up_ratio {up_ratio} ---")
-        train_model(name, model, up_ratio)
+        train_model(name, up_ratio)
 
         tf.keras.backend.clear_session()
-
-    # Create, build and compile model
 
 
 if __name__ == "__main__":

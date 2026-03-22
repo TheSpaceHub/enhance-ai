@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import '../ui/models/sr_experiment.dart';
 
 class ApiService {
-  // Define the exact communication channel name
   static const platform = MethodChannel('com.enhanceai.superres/nnapi');
 
   static Future<SRRun> upscaleImage({
@@ -19,7 +18,8 @@ class ApiService {
       // Send the data across the bridge to Kotlin
       final Uint8List? resultBytes = await platform.invokeMethod('upscaleImage', {
         'imageBytes': imageBytes,
-        'modelName': '${modelName.toLowerCase()}_x$factor.tflite',
+        // Ensure this matches your exact trained model filename
+        'modelName': '${modelName.toLowerCase()}_x$factor.tflite', 
         'factor': factor,
       });
 
@@ -33,9 +33,9 @@ class ApiService {
         upscaleFactor: factor.toDouble(),
         isProcessing: false,
         resultBytes: resultBytes,
-        device: "NPU (NNAPI Cached)",
+        device: "NPU (NNAPI Accelerated)",
         inferenceTime: "${(watch.elapsedMilliseconds / 1000.0).toStringAsFixed(3)}s",
-        metrics: {"Status": "Compiled & Cached Native Route"},
+        metrics: {"Status": "Success: 256x256 Float32 Tiling"},
       );
     } on PlatformException catch (e) {
       debugPrint("MethodChannel Error: '${e.message}'.");
