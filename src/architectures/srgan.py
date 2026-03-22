@@ -136,7 +136,6 @@ class SRGAN(keras.Model):
         )
         return config
 
-    @tf.function
     def train_step(self, data):
         lr, hr = data
 
