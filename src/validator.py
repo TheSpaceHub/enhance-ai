@@ -60,6 +60,14 @@ def load_vgg(path: str) -> keras.Model:
         vgg.save(path)
         return vgg
 
+def build_and_load_weights(path: str, model_class, scale: int, params: dict) -> tf.keras.Model:
+    """Creates the architechture, makes a dummy pass and load the weights"""
+    model = model_class(up_ratio=scale, **params) if scale else model_class()
+
+    model(tf.zeros([1, 64, 64, 3], tf.float32))
+
+    model.load_weights(path)
+    return model
 
 @tf.function(reduce_retracing=True)
 def get_mae_loss(y_true, y_pred) -> float:
@@ -250,14 +258,14 @@ def save_metrics_csv(
 def main():
     # Define constants
     BATCH_SIZE = 1
-    IMAGES_PATH = "data/DIV2K_train_HR/"
-    MODEL_FOLDER_PATH = "models/"
-    MODEL_NAMES = [
-        "average_x4.keras",
-        "cnnu_e100_x4.keras",
-        "espcn_e100_x2.keras",
-        "srrn_e100_b8f64_x4.keras",
-        "srgan_e100_b8f64_l005_x4.keras",
+    IMAGES_PATH = "../data/DIV2K_train_HR/"
+    MODEL_FOLDER_PATH = "../models/"
+    MODELS_CONFIG = [
+            {"label": "Average", "file": "average_x4.weights.h5", "class": archs.Average, "scale": 4, "params": {}},
+            {"label": "CNNU", "file": "cnnu_e100_x4.weights.h5", "class": archs.CNNUpscaler, "scale": 4, "params": {}},
+            {"label": "ESPCN", "file": "espcn_e100_x4.weights.h5", "class": archs.ESPCN, "scale": 4, "params": {}},
+            {"label": "SRRN", "file": "srrn_e100_b8f32_x4.weights.h5", "class": archs.SRRN, "scale": 4, "params": {"num_blocks": 8, "filters": 32}},
+            {"label": "SRGAN", "file": "srgan_e100_b8f32_l005_x4.weights.h5", "class": archs.SRRN, "scale": 4, "params": {"num_blocks": 8, "filters": 32}}, 
         ]
     MAX_DATASET_SIZE = 20
 
@@ -273,14 +281,20 @@ def main():
     # Load models
     models = []
     model_labels = []
-    for name in MODEL_NAMES:
+    for config in MODELS_CONFIG:
+        path = os.path.join(MODEL_FOLDER_PATH, config["file"])
         try:
-            model = keras.models.load_model(os.path.join(MODEL_FOLDER_PATH, name), custom_objects={'psnr': psnr,'ssim': ssim})
+            model = build_and_load_weights(
+                path=path, 
+                model_class=config["class"], 
+                scale=config["scale"], 
+                params=config["params"]
+            )
             models.append(model)
-            model_labels.append(model.name)
+            model_labels.append(config["label"])
             
         except Exception as e:
-            print(f"Could not load model {name}: {str(e)}")
+            print(f"Could not load model {config['label']}: {str(e)}")
 
     # Batch processing (holding all images in RAM is not viable for a large dataset)
     img_paths = load_image_paths(IMAGES_PATH)[:MAX_DATASET_SIZE]

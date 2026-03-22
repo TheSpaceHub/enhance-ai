@@ -11,25 +11,25 @@ MODEL_PATH = "../models/"
 OUTPUT_DIR = "../models/onnx_models"
 
 MODEL_FILES = {
-    "Average": {
-        2: MODEL_PATH + "average_x2.weights.h5",
-        4: MODEL_PATH + "average_x4.weights.h5",
-    },
-    "CNNU": {
-        2: MODEL_PATH + "cnnu_e100_x2.weights.h5",
-        4: MODEL_PATH + "cnnu_e100_x4.weights.h5",
-    },
-    "ESPCN": {
-        2: MODEL_PATH + "espcn_e100_x2.weights.h5",
-        4: MODEL_PATH + "espcn_e100_x4.weights.h5",
-    },
-    "SRRN": {
-        2: MODEL_PATH + "srrn_e100_b16f64_x2.weights.h5",
-        4: MODEL_PATH + "srrn_e100_b16f64_x4.weights.h5",
-    },
+    # "Average": {
+    #     2: MODEL_PATH + "average_x2.weights.h5",
+    #     4: MODEL_PATH + "average_x4.weights.h5",
+    # },
+    # "CNNU": {
+    #     2: MODEL_PATH + "cnnu_e100_x2.weights.h5",
+    #     4: MODEL_PATH + "cnnu_e100_x4.weights.h5",
+    # },
+    # "ESPCN": {
+    #     2: MODEL_PATH + "espcn_e100_x2.weights.h5",
+    #     4: MODEL_PATH + "espcn_e100_x4.weights.h5",
+    # },
+    # "SRRN": {
+    #     2: MODEL_PATH + "srrn_e100_b8f32_x2.weights.h5",
+    #     4: MODEL_PATH + "srrn_e100_b8f32_x4.weights.h5",
+    # },
     "SRGAN": {
-        2: MODEL_PATH + "srgan_e100_b8f64_l005_x2.h5",  # still WIP
-        4: MODEL_PATH + "srgan_e100_b8f64_l005_x4.h5",  # still WIP
+        2: MODEL_PATH + "srgan_e100_b8f32_l005_x2.weights.h5",
+        # 4: MODEL_PATH + "srgan_e100_b8f32_l005_x4.weights.h5",
     },
 }
 
@@ -47,12 +47,12 @@ PARAMETERS = {
     "CNNU": {2: {}, 4: {}},
     "ESPCN": {2: {}, 4: {}},
     "SRRN": {
-        2: {"num_blocks": 16, "filters": 64},
-        4: {"num_blocks": 16, "filters": 64},
+        2: {"num_blocks": 8, "filters": 32},
+        4: {"num_blocks": 8, "filters": 32},
     },
     "SRGAN": {
-        2: {"num_blocks": 8, "filters": 64},
-        4: {"num_blocks": 8, "filters": 64},
+        2: {"num_blocks": 8, "filters": 32},
+        4: {"num_blocks": 8, "filters": 32},
     },
 }
 
@@ -112,8 +112,6 @@ def convert_all_models_to_onnx():
             print(f"🔄 Converting {name} x{scale} to ONNX...")
             try:
                 # Load the appropriate model class
-                if name != "Average" or scale != 4:
-                    continue
                 if name == "Average":
                     model = load_model(path, Average, scale, PARAMETERS[name][scale])
                 elif name == "CNNU":
@@ -125,7 +123,8 @@ def convert_all_models_to_onnx():
                 elif name == "SRRN":
                     model = load_model(path, SRRN, scale, PARAMETERS[name][scale])
                 elif name == "SRGAN":
-                    model = load_model(path, SRGAN, scale, PARAMETERS[name][scale])
+                    # Change the SRGAN for the SRRN, because we only save the generator weights
+                    model = load_model(path, SRRN, scale, PARAMETERS[name][scale])
                 else:
                     raise ValueError(f"Unknown model: {name}")
 

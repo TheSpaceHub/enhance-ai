@@ -1,6 +1,6 @@
 import tensorflow as tf
 import matplotlib.pyplot as plt
-from architectures import Average, CNNUpscaler
+from architectures import Average, CNNUpscaler, SRRN
 from image_processing import load_and_preprocess, load_image_paths
 from keras.callbacks import TensorBoard
 import keras
@@ -134,15 +134,15 @@ def main():
     # Constants
     UP_RATIO = 4
     BATCH_SIZE = 16
-    FILTERS = 16
+    FILTERS = 32
     NUM_BLOCKS = 4
     EPOCHS = 10
     HR_SIZE = (256, 256)
-    DATA_FOLDER = "data/DIV2K_train_HR/DIV2K_train_HR/"
-    MODEL_NAME = "cnnu10ep"
+    DATA_FOLDER = "data/DIV2K_train_HR"
+    MODEL_NAME = "srrn_10_b4f16"
 
     # Create, build and compile model
-    model = CNNUpscaler(up_ratio=UP_RATIO)
+    model = SRRN(up_ratio=UP_RATIO, filters=FILTERS,num_blocks=NUM_BLOCKS)
     model.build((None, HR_SIZE[0], HR_SIZE[1], 3))
     model.compile(optimizer="adam", loss="mae", jit_compile=False)
 
@@ -154,12 +154,12 @@ def main():
     train_ds = build_dataset(image_paths, HR_SIZE, UP_RATIO, BATCH_SIZE, training=True)
 
     # Set up logs and real-time visualization
-    # tensorboard_callback = set_up_logging(MODEL_NAME)
+    tensorboard_callback = set_up_logging(MODEL_NAME)
 
     history = model.fit(
         train_ds,
         epochs=EPOCHS,
-        # callbacks=[tensorboard_callback],
+        callbacks=[tensorboard_callback],
     )
 
     # Save
