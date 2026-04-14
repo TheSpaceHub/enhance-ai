@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../../ui/models/sr_experiment.dart';
@@ -115,12 +116,15 @@ class _MainWorkspaceState extends State<MainWorkspace> {
 
   /// Renders the top toolbar with slot labels and zoom controls
   Widget _buildTopBar(String labelA, String labelB) {
-    return Container(
-      padding: const EdgeInsets.only(left: 8, right: 8, bottom: 12),
-      decoration: const BoxDecoration(
-        color: Color(0xFF1E1E1E),
-        border: Border(bottom: BorderSide(color: Colors.white10)),
-      ),
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+        child: Container(
+          padding: const EdgeInsets.only(left: 8, right: 8, bottom: 12),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.3),
+            border: const Border(bottom: BorderSide(color: Colors.white10)),
+          ),
       child: SafeArea(
         bottom: false,
         child: Padding(
@@ -151,7 +155,7 @@ class _MainWorkspaceState extends State<MainWorkspace> {
           ),
         ),
       ),
-    );
+    )));
   }
 
   /// Empty workspace shown before any image is loaded.
@@ -166,14 +170,10 @@ class _MainWorkspaceState extends State<MainWorkspace> {
             width: 400,
             height: 300,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF2A2A2A), Color(0xFF1E1E1E)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              color: const Color(0xFF1E1E24),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: Colors.white10, width: 2),
-              boxShadow: [
+              boxShadow: const [
                 BoxShadow(
                   color: Colors.black45,
                   blurRadius: 12,
@@ -242,7 +242,6 @@ class _MainWorkspaceState extends State<MainWorkspace> {
             widget.activeRun!.modelName,
             style: const TextStyle(color: Colors.white38),
           ),
-          Text("${widget.activeRun!.progress.toStringAsFixed(0)}%"),
         ],
       ),
     );

@@ -3,6 +3,7 @@ import '../../ui/models/sr_experiment.dart';
 import '../../ui/models/model_info.dart';
 import 'package:file_saver/file_saver.dart';
 import 'dart:typed_data';
+import 'dart:ui';
 
 /// Configuration and results panel for running and inspecting upscale experiments
 class RightPanel extends StatefulWidget {
@@ -200,11 +201,14 @@ class _RightPanelState extends State<RightPanel> {
 
     final isProcessing = widget.activeRun?.isProcessing ?? false;
 
-    return Container(
-      width: 320,
-      color: const Color.fromARGB(255, 37, 37, 37),
-      child: SafeArea(
-        child: Column(
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20.0, sigmaY: 20.0),
+        child: Container(
+          width: 320,
+          color: Colors.black.withOpacity(0.4),
+          child: SafeArea(
+            child: Column(
           children: [
             Expanded(
               child: ListView(
@@ -334,28 +338,45 @@ class _RightPanelState extends State<RightPanel> {
                   SizedBox(
                     width: double.infinity,
                     height: 50,
-                    child: ElevatedButton(
-                      onPressed: isProcessing
+                    child: InkWell(
+                      onTap: isProcessing
                           ? null
-                          : () =>
-                                widget.onUpscale(selectedModel, upscaleFactor),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueAccent,
-                        foregroundColor: Colors.white,
+                          : () => widget.onUpscale(selectedModel, upscaleFactor),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          color: isProcessing ? Colors.blueGrey : Colors.blueAccent,
+                          boxShadow: isProcessing
+                              ? []
+                              : [
+                                  BoxShadow(
+                                    color: Colors.blueAccent.withOpacity(0.35),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                        ),
+                        child: Center(
+                          child: isProcessing
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text(
+                                  'RUN UPSCALE',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    letterSpacing: 1.0,
+                                  ),
+                                ),
+                        ),
                       ),
-                      child: isProcessing
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text(
-                              'RUN UPSCALE',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
                     ),
                   ),
 
@@ -405,9 +426,9 @@ class _RightPanelState extends State<RightPanel> {
             // History selector
             Container(
               height: 275,
-              decoration: const BoxDecoration(
-                color: Color(0xFF1E1E1E),
-                border: Border(top: BorderSide(color: Colors.white10)),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.3),
+                border: const Border(top: BorderSide(color: Colors.white10)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -488,7 +509,7 @@ class _RightPanelState extends State<RightPanel> {
           ],
         ),
       ),
-    );
+    )));
   }
 
   /// Builds a section header label used to separate panel sections

@@ -20,6 +20,44 @@ class ApiService {
     Function(double)? onProgress,
   }) async {
     try {
+      if (factor == 8) {
+        final stopwatch = Stopwatch()..start();
+        
+        // Pass 1: 4x Scale
+        final run4x = await upscaleImage(
+          imageBytes: imageBytes,
+          modelName: modelName,
+          factor: 4,
+          device: device,
+          onProgress: (p) => onProgress?.call(p * 0.5),
+        );
+        
+        // Pass 2: 2x Scale mapped over Pass 1 Buffer
+        final run8x = await upscaleImage(
+          imageBytes: run4x.resultBytes!,
+          modelName: modelName,
+          factor: 2,
+          device: device,
+          onProgress: (p) => onProgress?.call(0.5 + (p * 0.5)),
+        );
+        
+        stopwatch.stop();
+
+        return SRRun(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          modelName: modelName,
+          upscaleFactor: 8.0,
+          isProcessing: false,
+          resultBytes: run8x.resultBytes,
+          device: device,
+          inferenceTime: "${(stopwatch.elapsedMilliseconds / 1000.0).toStringAsFixed(3)}s",
+          metrics: {
+            "Resolution": "${run4x.metrics['Resolution']?.split(' → ')[0] ?? '?' } → ${run8x.metrics['Resolution']?.split(' → ')[1] ?? '?'}",
+            "Accelerated (Tiles)": "ONNX Chained (4x + 2x)",
+          },
+        );
+      }
+
       String safeModelName = modelName.toLowerCase();
       if (safeModelName == 'srresnet') {
         safeModelName = 'srrn';

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'ui_mobile/pages/home_page.dart';
 
 void main() {
@@ -16,11 +17,12 @@ class MyApp extends StatelessWidget {
       title: 'Enhance AI',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF121212),
+        scaffoldBackgroundColor: const Color(0xFF101014),
         colorScheme: const ColorScheme.dark(
           primary: Colors.blueAccent,
           secondary: Colors.tealAccent,
         ),
+        textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
       ),
       home: const HomePage(),
     );

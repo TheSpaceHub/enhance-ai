@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../ui/models/sr_experiment.dart';
 
@@ -24,11 +25,14 @@ class LeftPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 260,
-      color: const Color(0xFF1E1E1E),
-      child: SafeArea(
-        child: Column(
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20.0, sigmaY: 20.0),
+        child: Container(
+          width: 260,
+          color: Colors.black.withOpacity(0.4),
+          child: SafeArea(
+            child: Column(
         children: [
           // Header Logo
           Padding(
@@ -59,13 +63,38 @@ class LeftPanel extends StatelessWidget {
           // New project action
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: ElevatedButton.icon(
-              onPressed: onNewProject,
-              icon: const Icon(Icons.add),
-              label: const Text("New Project"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF333333),
-                minimumSize: const Size(double.infinity, 45),
+            child: InkWell(
+              onTap: onNewProject,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.blueAccent,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.blueAccent.withOpacity(0.35),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.add, color: Colors.white, size: 22),
+                    SizedBox(width: 8),
+                    Text(
+                      "New Project",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -126,6 +155,6 @@ class LeftPanel extends StatelessWidget {
         ],
       ),
       ),
-    );
+    )));
   }
 }
