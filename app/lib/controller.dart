@@ -187,10 +187,10 @@ class Controller extends ChangeNotifier {
         modelName: model,
         factor: factor.toInt(),
         device: _selectedDevice,
-        /*onProgress: (p) {
+        onProgress: (p) {
           if (activeRun != null) activeRun!.progress = p;
           _stateSetter();
-        },*/
+        },
       );
 
       // Replace temporary run with final result
