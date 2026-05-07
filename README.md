@@ -99,7 +99,7 @@ Metrics:
 * ESPCN offers the best practical trade-off for real-time use
 * Deeper models (SRRN) improve quality but introduce latency
 
-## 🔍 Visual Comparison
+## Visual Comparison
 
 | Input                 | Average             | CNNU                 |
 | --------------------- | ------------------- | -------------------- |
@@ -121,7 +121,7 @@ At a high level:
 2. Models are defined in a modular way (`architectures/`)
 3. Training is done with TensorFlow/Keras
 4. Results are evaluated using `validator.py`
-5. Models are exported to ONNX for deployment in the app
+5. Models are exported to ONNX and executed locally through ONNX Runtime
 
 You can either:
 - use the provided scripts (`train_model.py`)
